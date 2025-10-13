@@ -6,9 +6,28 @@
     <title>Radashkovichy map 1888</title>
     
     <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" 
-          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" 
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
           crossorigin=""/>
+
+    <!-- Leaflet TextPath CSS -->
+    <style>
+        .leaflet-text-path {
+            font-size: 12px;
+            font-weight: bold;
+            fill: #333;
+            paint-order: stroke;
+            stroke: white;
+            stroke-width: 3px;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            transition: opacity 0.3s;
+        }
+
+        .leaflet-text-path-hidden {
+            opacity: 0;
+        }
+    </style>
     
     <style>
         body {
@@ -28,6 +47,7 @@
             flex: 1;
             min-width: 50%;
             height: 100vh;
+            background-color: #f0f0f0;
         }
 
         #sidebar {
@@ -177,36 +197,21 @@
             }
         }
         
-        /* Street labels */
-        .street-label {
-            background: transparent;
-            border: none;
-            box-shadow: none;
-            font-size: 11px;
-            font-weight: bold;
-            color: #333;
-            text-shadow: 
-                -1px -1px 0 #fff,
-                1px -1px 0 #fff,
-                -1px 1px 0 #fff,
-                1px 1px 0 #fff,
-                -2px 0 0 #fff,
-                2px 0 0 #fff,
-                0 -2px 0 #fff,
-                0 2px 0 #fff;
-            white-space: nowrap;
-        }
-        
         /* Plot numbers */
         .field-label {
-            background: rgba(255, 255, 255, 0.8);
-            border: 1px solid #333;
-            border-radius: 3px;
-            padding: 2px 5px;
-            font-size: 12px;
+            background: transparent;
+            border: none;
+            padding: 0;
+            font-size: 14px;
             font-weight: bold;
-            color: #333;
-            box-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+            color: #2c5f2d;
+            text-align: center;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .field-label-hidden {
+            opacity: 0;
         }
         
         /* Popup */
@@ -214,17 +219,10 @@
             margin: 10px;
             line-height: 1.4;
         }
-        
-        .popup-title {
-            font-weight: bold;
-            font-size: 14px;
-            margin-bottom: 5px;
-            color: #2c5f2d;
-        }
-        
+
         .popup-info {
-            font-size: 12px;
-            margin: 3px 0;
+            font-size: 13px;
+            margin: 5px 0;
         }
         
         /* Legend */
@@ -281,7 +279,7 @@
             </div>
 
             <div id="sidebar-controls">
-                <input type="text" id="search-input" placeholder="Поиск по номеру, владельцу или улице...">
+                <input type="text" id="search-input" placeholder="Поиск по номеру участка или владельцу...">
             </div>
 
             <div id="table-container">
@@ -304,9 +302,12 @@
     </div>
     
     <!-- Leaflet JavaScript -->
-    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js" 
-            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" 
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
             crossorigin=""></script>
+
+    <!-- Leaflet TextPath Plugin -->
+    <script src="https://cdn.jsdelivr.net/npm/leaflet-textpath@1.2.3/leaflet.textpath.min.js"></script>
     
     <script>
         // Ждём полной загрузки страницы
@@ -334,7 +335,7 @@
             // ========================================
             
             const map = L.map('map').setView(mapCenter, initialZoom);
-            
+
             // Базовая карта OpenStreetMap
             const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
@@ -408,6 +409,8 @@
             // ========================================
 
             let combinedLayer;
+            let fieldLabelsGroup = L.layerGroup(); // Группа для номеров участков
+            let streetLayers = []; // Массив для хранения линий улиц с названиями
             
             // ========================================
             // ПАРАЛЛЕЛЬНАЯ ЗАГРУЗКА ВСЕХ СЛОЁВ
@@ -458,35 +461,47 @@
                         const props = feature.properties;
                         const sourceLayer = props.source_layer;
 
-                        // Popup для участков земли
+                        // Popup только для участков земли (polygons1)
                         if (sourceLayer === 'polygons1') {
-                            let popupContent = '<div class="popup-title">Участок земли</div>';
+                            let popupContent = '';
+                            let hasData = false;
 
-                            if (props.field_Number) {
-                                popupContent += `<div class="popup-info"><b>Номер:</b> ${props.field_Number}</div>`;
+                            if (props.Field_Number) {
+                                popupContent += `<div class="popup-info"><b>Номер:</b> ${props.Field_Number}</div>`;
+                                hasData = true;
                             }
-                            if (props['first and last name of the owners']) {
-                                popupContent += `<div class="popup-info"><b>Владелец:</b> ${props['first and last name of the owners']}</div>`;
+                            if (props['First and last name of the owners']) {
+                                popupContent += `<div class="popup-info"><b>Владелец:</b> ${props['First and last name of the owners']}</div>`;
+                                hasData = true;
                             }
-                            if (props['length of land plots']) {
-                                popupContent += `<div class="popup-info"><b>Длина:</b> ${props['length of land plots']}</div>`;
+                            if (props['Length of land plots']) {
+                                popupContent += `<div class="popup-info"><b>Длина:</b> ${props['Length of land plots']}</div>`;
+                                hasData = true;
                             }
-                            if (props['width of land plots']) {
-                                popupContent += `<div class="popup-info"><b>Ширина:</b> ${props['width of land plots']}</div>`;
+                            if (props['Width of land plots']) {
+                                popupContent += `<div class="popup-info"><b>Ширина:</b> ${props['Width of land plots']}</div>`;
+                                hasData = true;
                             }
 
-                            layer.bindPopup(popupContent);
+                            // Привязываем popup только если есть данные
+                            if (hasData) {
+                                layer.bindPopup(popupContent);
+                            }
 
                             // Метка с номером участка
-                            if (props.field_Number) {
+                            if (props.Field_Number) {
                                 const center = layer.getBounds().getCenter();
-                                L.marker(center, {
+                                const marker = L.marker(center, {
                                     icon: L.divIcon({
                                         className: 'field-label',
-                                        html: props.field_Number,
-                                        iconSize: null
+                                        html: props.Field_Number,
+                                        iconSize: [20, 20],
+                                        iconAnchor: [10, 10]
                                     })
-                                }).addTo(map);
+                                });
+
+                                // Добавляем маркер в группу номеров
+                                fieldLabelsGroup.addLayer(marker);
                             }
 
                             // Hover эффекты
@@ -498,62 +513,104 @@
                             });
                         }
 
-                        // Popup для частей участков
-                        if (sourceLayer === 'polygons2') {
-                            layer.bindPopup('<div class="popup-title">Часть участка</div>');
+                        // Для домов и частей участков - показываем popup участка под ними
+                        if (sourceLayer === 'polygons2' || sourceLayer === 'polygons3') {
+                            layer.on('click', function(e) {
+                                // Ищем участок земли (polygons1) под кликом
+                                const clickedPoint = e.latlng;
 
-                            layer.on('mouseover', function() {
-                                layer.setStyle({weight: 4, fillOpacity: 0.9});
-                            });
-                            layer.on('mouseout', function() {
-                                combinedLayer.resetStyle(layer);
-                            });
-                        }
+                                combinedLayer.eachLayer(function(l) {
+                                    if (l.feature &&
+                                        l.feature.properties.source_layer === 'polygons1' &&
+                                        l.getBounds &&
+                                        l.getBounds().contains(clickedPoint)) {
 
-                        // Popup для домов
-                        if (sourceLayer === 'polygons3') {
-                            layer.bindPopup('<div class="popup-title">Дом</div>');
-
-                            layer.on('mouseover', function() {
-                                layer.setStyle({weight: 4, fillOpacity: 0.9});
-                            });
-                            layer.on('mouseout', function() {
-                                combinedLayer.resetStyle(layer);
+                                        // Если у участка есть popup, открываем его
+                                        if (l.getPopup()) {
+                                            l.openPopup(clickedPoint);
+                                        }
+                                    }
+                                });
                             });
                         }
 
-                        // Popup для границ улиц
-                        if (sourceLayer === 'lines') {
-                            let popupContent = '<div class="popup-title">Граница улицы</div>';
-                            if (props['street name']) {
-                                popupContent += `<div class="popup-info"><b>Название:</b> ${props['street name']}</div>`;
-                            }
-                            layer.bindPopup(popupContent);
+                        // Текст вдоль линии для улиц с названием
+                        if (sourceLayer === 'lines' && props['Street name'] && props['Street name'] !== null && props['Street name'] !== '') {
+                            layer.setText(props['Street name'], {
+                                repeat: false,
+                                center: true,
+                                offset: -8,
+                                attributes: {
+                                    'class': 'leaflet-text-path',
+                                    'dy': '-3'
+                                }
+                            });
 
-                            // Метка с названием улицы
-                            if (props['street name'] && props['street name'] !== null && props['street name'] !== '') {
-                                const center = layer.getBounds().getCenter();
-                                L.marker(center, {
-                                    icon: L.divIcon({
-                                        className: 'street-label',
-                                        html: props['street name'],
-                                        iconSize: null
-                                    })
-                                }).addTo(map);
-                            }
+                            // Сохраняем линию для управления видимостью названий
+                            streetLayers.push(layer);
                         }
                     }
                 }).addTo(map);
 
                 console.log('✓ Единый слой создан и добавлен на карту');
 
-                // Добавляем контроль слоя
-                L.control.layers(null, {
-                    "Историческая карта 1888": combinedLayer
-                }, {
+                // Создаём группу, объединяющую историческую карту и номера участков
+                const historicalMapGroup = L.layerGroup([combinedLayer, fieldLabelsGroup]).addTo(map);
+
+                // Добавляем контроль слоёв (оба как checkbox'ы)
+                const overlayMaps = {
+                    "OpenStreetMap": osmLayer,
+                    "Историческая карта 1888": historicalMapGroup
+                };
+
+                L.control.layers(null, overlayMaps, {
                     collapsed: false,
                     position: 'topright'
                 }).addTo(map);
+
+                // ========================================
+                // УПРАВЛЕНИЕ ВИДИМОСТЬЮ НОМЕРОВ УЧАСТКОВ И НАЗВАНИЙ УЛИЦ
+                // ========================================
+
+                // Функция для обновления видимости номеров и названий улиц в зависимости от масштаба
+                function updateLabelsVisibility() {
+                    const zoom = map.getZoom();
+                    const minZoom = 18; // Минимальный зоом для отображения надписей
+
+                    // Скрываем/показываем номера участков
+                    fieldLabelsGroup.eachLayer(marker => {
+                        const element = marker.getElement();
+                        if (element) {
+                            if (zoom >= minZoom) {
+                                element.classList.remove('field-label-hidden');
+                            } else {
+                                element.classList.add('field-label-hidden');
+                            }
+                        }
+                    });
+
+                    // Скрываем/показываем названия улиц
+                    streetLayers.forEach(streetLayer => {
+                        const pathElement = streetLayer._path;
+                        if (pathElement) {
+                            // Ищем текстовые элементы внутри SVG
+                            const textElements = pathElement.parentElement.querySelectorAll('text.leaflet-text-path');
+                            textElements.forEach(textElement => {
+                                if (zoom >= minZoom) {
+                                    textElement.classList.remove('leaflet-text-path-hidden');
+                                } else {
+                                    textElement.classList.add('leaflet-text-path-hidden');
+                                }
+                            });
+                        }
+                    });
+                }
+
+                // Вызываем при первой загрузке
+                updateLabelsVisibility();
+
+                // Обработчик изменения масштаба
+                map.on('zoomend', updateLabelsVisibility);
 
                 // ========================================
                 // ЗАПОЛНЕНИЕ ТАБЛИЦЫ ДАННЫМИ
@@ -571,26 +628,6 @@
             // ФУНКЦИИ ДЛЯ РАБОТЫ С ТАБЛИЦЕЙ
             // ========================================
 
-            function getTypeName(sourceLayer) {
-                const types = {
-                    'polygons1': 'Участок',
-                    'polygons2': 'Часть',
-                    'polygons3': 'Дом',
-                    'lines': 'Улица'
-                };
-                return types[sourceLayer] || 'Неизвестно';
-            }
-
-            function getTypeBadgeClass(sourceLayer) {
-                const classes = {
-                    'polygons1': 'type-land',
-                    'polygons2': 'type-subdivision',
-                    'polygons3': 'type-building',
-                    'lines': 'type-street'
-                };
-                return classes[sourceLayer] || '';
-            }
-
             function populateTable(features) {
                 const tableBody = document.getElementById('data-table-body');
                 tableBody.innerHTML = '';
@@ -599,45 +636,28 @@
 
                 features.forEach((feature, index) => {
                     const props = feature.properties;
-                    const sourceLayer = props.source_layer;
-
-                    // Пропускаем линии без названия улицы (они не несут полезной информации для таблицы)
-                    if (sourceLayer === 'lines' && !props['street name']) {
-                        return;
-                    }
 
                     const row = document.createElement('tr');
                     row.dataset.featureIndex = index;
 
-                    // Номер участка или название улицы
-                    let displayNumber = '-';
-                    if (sourceLayer === 'polygons1') {
-                        displayNumber = props.field_Number || '-';
-                    } else if (sourceLayer === 'lines') {
-                        displayNumber = props['street name'] || '-';
-                    }
+                    // Номер участка
+                    const displayNumber = props.Field_Number || '-';
 
                     // Владелец
                     let owner = '-';
-                    if (props['first and last name of the owners']) {
-                        owner = props['first and last name of the owners'];
-                    } else if (props['First and last name of the owners']) {
+                    if (props['First and last name of the owners']) {
                         owner = props['First and last name of the owners'];
                     }
 
                     // Длина
-                    const length = props['length of land plots'] || props['Length of land plots'] || '-';
+                    const length = props['Length of land plots'] || '-';
 
                     // Ширина
-                    const width = props['width of land plots'] || props['Width of land plots'] || '-';
-
-                    // Тип
-                    const typeName = getTypeName(sourceLayer);
-                    const typeBadgeClass = getTypeBadgeClass(sourceLayer);
+                    const width = props['Width of land plots'] || '-';
 
                     row.innerHTML = `
                         <td>${displayNumber}</td>
-                        <td><span class="type-badge ${typeBadgeClass}">${typeName}</span></td>
+                        <td><span class="type-badge type-land">Участок</span></td>
                         <td>${owner}</td>
                         <td>${length}</td>
                         <td>${width}</td>
@@ -664,8 +684,13 @@
             function saveTableData(features) {
                 allTableData = features.filter(feature => {
                     const sourceLayer = feature.properties.source_layer;
-                    // Пропускаем линии без названия улицы
-                    return !(sourceLayer === 'lines' && !feature.properties['street name']);
+                    const props = feature.properties;
+
+                    // Только участки земли (polygons1) с номером участка
+                    return sourceLayer === 'polygons1' &&
+                           props.Field_Number !== null &&
+                           props.Field_Number !== undefined &&
+                           props.Field_Number !== '';
                 });
             }
 
@@ -684,16 +709,12 @@
                     const props = feature.properties;
 
                     // Поиск по номеру участка
-                    const fieldNumber = String(props.field_Number || '').toLowerCase();
+                    const fieldNumber = String(props.Field_Number || '').toLowerCase();
                     if (fieldNumber.includes(term)) return true;
 
                     // Поиск по имени владельца
-                    const owner = String(props['first and last name of the owners'] || props['First and last name of the owners'] || '').toLowerCase();
+                    const owner = String(props['First and last name of the owners'] || '').toLowerCase();
                     if (owner.includes(term)) return true;
-
-                    // Поиск по названию улицы
-                    const street = String(props['street name'] || '').toLowerCase();
-                    if (street.includes(term)) return true;
 
                     return false;
                 });
