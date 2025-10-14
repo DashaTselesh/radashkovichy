@@ -10,32 +10,25 @@
           integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
           crossorigin=""/>
 
-    <!-- Leaflet TextPath CSS -->
     <style>
-        .leaflet-text-path {
-            font-size: 12px;
-            font-weight: bold;
-            fill: #333;
-            paint-order: stroke;
-            stroke: white;
-            stroke-width: 3px;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-            transition: opacity 0.3s;
+        /* ========================================
+           RESET & BASE STYLES
+           ======================================== */
+
+        * {
+            box-sizing: border-box;
         }
 
-        .leaflet-text-path-hidden {
-            opacity: 0;
-        }
-    </style>
-    
-    <style>
         body {
             margin: 0;
             padding: 0;
             font-family: Arial, sans-serif;
             overflow: hidden;
         }
+
+        /* ========================================
+           LAYOUT
+           ======================================== */
 
         #container {
             display: flex;
@@ -49,6 +42,10 @@
             height: 100vh;
             background-color: #f0f0f0;
         }
+
+        /* ========================================
+           SIDEBAR
+           ======================================== */
 
         #sidebar {
             width: 500px;
@@ -80,7 +77,6 @@
             font-size: 14px;
             border: 1px solid #ccc;
             border-radius: 4px;
-            box-sizing: border-box;
         }
 
         #table-container {
@@ -89,12 +85,17 @@
             background: white;
         }
 
+        /* ========================================
+           DATA TABLE
+           ======================================== */
+
         #data-table {
             width: 100%;
             border-collapse: collapse;
             font-size: 13px;
         }
 
+        /* Table Header */
         #data-table thead {
             position: sticky;
             top: 0;
@@ -110,17 +111,38 @@
             border-bottom: 2px solid #1a3a1b;
             cursor: pointer;
             user-select: none;
+            position: relative;
         }
 
         #data-table th:hover {
             background: #3a7a3d;
         }
 
+        /* Sort Indicators */
+        #data-table th[data-sort]::after {
+            content: ' ⇅';
+            opacity: 0.3;
+            font-size: 12px;
+            margin-left: 5px;
+        }
+
+        #data-table th.sort-asc::after {
+            content: ' ▲';
+            opacity: 1;
+        }
+
+        #data-table th.sort-desc::after {
+            content: ' ▼';
+            opacity: 1;
+        }
+
+        /* Table Cells */
         #data-table td {
             padding: 8px;
             border-bottom: 1px solid #e0e0e0;
         }
 
+        /* Table Rows */
         #data-table tbody tr {
             cursor: pointer;
             transition: background-color 0.2s;
@@ -143,42 +165,112 @@
             background-color: #f0f8f0;
         }
 
-        .type-badge {
-            display: inline-block;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-size: 11px;
+        /* ========================================
+           MAP OVERLAYS
+           ======================================== */
+
+        /* Plot Number Labels */
+        .field-label {
+            background: transparent;
+            border: none;
+            padding: 0;
+            font-size: 14px;
             font-weight: bold;
+            color: #2c5f2d;
+            text-align: center;
+            pointer-events: none;
+            transition: opacity 0.3s;
         }
 
-        .type-land {
-            background: #90EE90;
-            color: #2d5f2d;
+        .field-label-hidden {
+            opacity: 0;
         }
 
-        .type-building {
-            background: #FFD700;
-            color: #8B6914;
+        /* Street Name Labels */
+        .leaflet-text-path {
+            font-size: 12px;
+            font-weight: bold;
+            fill: #333;
+            paint-order: stroke;
+            stroke: white;
+            stroke-width: 3px;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            transition: opacity 0.3s;
         }
 
-        .type-subdivision {
-            background: #FFB6C1;
-            color: #8B2252;
+        .leaflet-text-path-hidden {
+            opacity: 0 !important;
+            pointer-events: none !important;
         }
 
-        .type-street {
-            background: #808080;
-            color: white;
+        /* Popup Content */
+        .leaflet-popup-content {
+            margin: 10px;
+            line-height: 1.4;
         }
 
-        /* Адаптивность для планшетов */
+        .popup-info {
+            font-size: 13px;
+            margin: 5px 0;
+        }
+
+        /* Map Legend */
+        .legend {
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.4);
+            line-height: 20px;
+            font-size: 12px;
+        }
+
+        .legend-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .legend-item {
+            margin: 3px 0;
+        }
+
+        .legend-color {
+            display: inline-block;
+            width: 20px;
+            height: 15px;
+            margin-right: 5px;
+            border: 1px solid #333;
+            vertical-align: middle;
+        }
+
+        /* ========================================
+           LOADING STATE
+           ======================================== */
+
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            z-index: 9999;
+        }
+
+        /* ========================================
+           RESPONSIVE DESIGN
+           ======================================== */
+
+        /* Tablets */
         @media (max-width: 1024px) {
             #sidebar {
                 width: 400px;
             }
         }
 
-        /* Адаптивность для мобильных */
+        /* Mobile */
         @media (max-width: 768px) {
             #container {
                 flex-direction: column;
@@ -196,75 +288,6 @@
                 border-top: 2px solid #ccc;
             }
         }
-        
-        /* Plot numbers */
-        .field-label {
-            background: transparent;
-            border: none;
-            padding: 0;
-            font-size: 14px;
-            font-weight: bold;
-            color: #2c5f2d;
-            text-align: center;
-            pointer-events: none;
-            transition: opacity 0.3s;
-        }
-
-        .field-label-hidden {
-            opacity: 0;
-        }
-        
-        /* Popup */
-        .leaflet-popup-content {
-            margin: 10px;
-            line-height: 1.4;
-        }
-
-        .popup-info {
-            font-size: 13px;
-            margin: 5px 0;
-        }
-        
-        /* Legend */
-        .legend {
-            background: white;
-            padding: 10px;
-            border-radius: 5px;
-            box-shadow: 0 1px 5px rgba(0,0,0,0.4);
-            line-height: 20px;
-            font-size: 12px;
-        }
-        
-        .legend-title {
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        
-        .legend-item {
-            margin: 3px 0;
-        }
-        
-        .legend-color {
-            display: inline-block;
-            width: 20px;
-            height: 15px;
-            margin-right: 5px;
-            border: 1px solid #333;
-            vertical-align: middle;
-        }
-        
-        /* Loading */
-        #loading {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 20px;
-            border-radius: 5px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-            z-index: 9999;
-        }
     </style>
 </head>
 <body>
@@ -275,26 +298,25 @@
 
         <div id="sidebar">
             <div id="sidebar-header">
-                База данных участков
+                Land Plots Database
             </div>
 
             <div id="sidebar-controls">
-                <input type="text" id="search-input" placeholder="Поиск по номеру участка или владельцу...">
+                <input type="text" id="search-input" placeholder="Search by plot number or owner...">
             </div>
 
             <div id="table-container">
                 <table id="data-table">
                     <thead>
                         <tr>
-                            <th data-sort="number">№</th>
-                            <th data-sort="type">Тип</th>
-                            <th data-sort="owner">Владелец</th>
-                            <th data-sort="length">Длина</th>
-                            <th data-sort="width">Ширина</th>
+                            <th data-sort="number">No.</th>
+                            <th data-sort="owner">Owner</th>
+                            <th data-sort="length">Length</th>
+                            <th data-sort="width">Width</th>
                         </tr>
                     </thead>
                     <tbody id="data-table-body">
-                        <!-- Данные будут загружены через JavaScript -->
+                        <!-- Data will be loaded via JavaScript -->
                     </tbody>
                 </table>
             </div>
@@ -310,91 +332,94 @@
     <script src="https://cdn.jsdelivr.net/npm/leaflet-textpath@1.2.3/leaflet.textpath.min.js"></script>
     
     <script>
-        // Ждём полной загрузки страницы
+        // ========================================
+        // APPLICATION INITIALIZATION
+        // ========================================
+
         window.addEventListener('load', function() {
-            // Убираем индикатор загрузки
+            // Hide loading indicator
             document.getElementById('loading').style.display = 'none';
-            
-            // Проверяем что Leaflet загружен
+
+            // Check if Leaflet is loaded
             if (typeof L === 'undefined') {
                 alert('Error: The library Leaflet was not loaded. Check your internet connection.');
                 return;
             }
-            
+
             // ========================================
-            // НАСТРОЙКИ КАРТЫ
+            // MAP CONFIGURATION
             // ========================================
-            
-            // ИЗМЕНИТЕ ЭТИ КООРДИНАТЫ на правильные!
-            // Формат: [широта, долгота] в градусах (WGS84)
-            const mapCenter = [54.154854, 27.240569]; 
+
+            const mapCenter = [54.154854, 27.240569]; // Radashkovichy, Belarus (WGS84)
             const initialZoom = 18;
+            const minZoomForLabels = 18; // Minimum zoom level to show labels
             
             // ========================================
-            // ИНИЦИАЛИЗАЦИЯ КАРТЫ
+            // MAP INITIALIZATION
             // ========================================
-            
+
             const map = L.map('map').setView(mapCenter, initialZoom);
 
-            // Базовая карта OpenStreetMap
+            // OpenStreetMap base layer
             const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
                 maxZoom: 22,
                 maxNativeZoom: 19
             }).addTo(map);
-            
+
             // ========================================
-            // СТИЛИ ДЛЯ СЛОЁВ
+            // LAYER STYLING FUNCTIONS
             // ========================================
 
-            // Определяем тип фичи по исходному слою
+            // Determine feature style based on source layer
             function getFeatureStyle(feature) {
                 const sourceLayer = feature.properties.source_layer;
+                const props = feature.properties;
 
-                // Для линий
+                // Street boundaries (lines)
                 if (sourceLayer === 'lines') {
                     return {
-                        color: feature.properties.stroke_color || '#808080',
-                        weight: feature.properties.stroke_width || 2,
+                        color: props.stroke_color || '#808080',
+                        weight: props.stroke_width || 2,
                         opacity: 1,
-                        dashArray: feature.properties.dash_array || ''
+                        dashArray: props.dash_array || ''
                     };
                 }
 
-                // Для полигонов (участки земли)
+                // Land plots (polygons1)
                 if (sourceLayer === 'polygons1') {
                     return {
-                        fillColor: feature.properties.fill_color || '#90EE90',
-                        fillOpacity: feature.properties.fill_opacity || 0.8,
-                        color: feature.properties.stroke_color || '#2d5f2d',
-                        weight: feature.properties.stroke_width || 2,
+                        fillColor: props.fill_color || '#90EE90',
+                        fillOpacity: props.fill_opacity || 0.8,
+                        color: props.stroke_color || '#2d5f2d',
+                        weight: props.stroke_width || 2,
                         opacity: 1
                     };
                 }
 
-                // Для полигонов (части участков)
+                // Plot subdivisions (polygons2)
                 if (sourceLayer === 'polygons2') {
                     return {
-                        fillColor: feature.properties.fill_color || '#FFB6C1',
-                        fillOpacity: feature.properties.fill_opacity || 0.8,
-                        color: feature.properties.stroke_color || '#C71585',
-                        weight: feature.properties.stroke_width || 2,
+                        fillColor: props.fill_color || '#FFB6C1',
+                        fillOpacity: props.fill_opacity || 0.8,
+                        color: props.stroke_color || '#C71585',
+                        weight: props.stroke_width || 2,
                         opacity: 1
                     };
                 }
 
-                // Для полигонов (дома)
+                // Buildings (polygons3)
                 if (sourceLayer === 'polygons3') {
                     return {
-                        fillColor: feature.properties.fill_color || '#FFD700',
-                        fillOpacity: feature.properties.fill_opacity || 0.8,
-                        color: feature.properties.stroke_color || '#DAA520',
-                        weight: feature.properties.stroke_width || 2,
+                        fillColor: props.fill_color || '#FFD700',
+                        fillOpacity: props.fill_opacity || 0.8,
+                        color: props.stroke_color || '#DAA520',
+                        weight: props.stroke_width || 2,
                         opacity: 1
                     };
                 }
 
-                // Дефолтный стиль
+                // Default style
                 return {
                     fillColor: '#cccccc',
                     fillOpacity: 0.5,
@@ -405,17 +430,18 @@
             }
 
             // ========================================
-            // ПЕРЕМЕННЫЕ ДЛЯ СЛОЁВ
+            // GLOBAL LAYER VARIABLES
             // ========================================
 
-            let combinedLayer;
-            let fieldLabelsGroup = L.layerGroup(); // Группа для номеров участков
-            let streetLayers = []; // Массив для хранения линий улиц с названиями
-            
+            let combinedLayer; // Combined GeoJSON layer with all features
+            let fieldLabelsGroup = L.layerGroup(); // Group for plot number markers
+            let streetLayers = []; // Array to store street lines with names
+
             // ========================================
-            // ПАРАЛЛЕЛЬНАЯ ЗАГРУЗКА ВСЕХ СЛОЁВ
+            // DATA LOADING
             // ========================================
 
+            // Load all GeoJSON files in parallel
             Promise.all([
                 fetch('data/map1-polygons.geojson').then(r => r.json()),
                 fetch('data/map1-buildings.geojson').then(r => r.json()),
@@ -423,15 +449,15 @@
                 fetch('data/map1-lines.geojson').then(r => r.json())
             ])
             .then(([polygons1Data, polygons3Data, polygons2Data, linesData]) => {
-                console.log('✓ Все файлы загружены');
+                console.log('✓ All files loaded');
 
-                // Помечаем каждую фичу исходным слоем для правильного стилизования
+                // Tag each feature with its source layer for proper styling
                 polygons1Data.features.forEach(f => f.properties.source_layer = 'polygons1');
                 polygons2Data.features.forEach(f => f.properties.source_layer = 'polygons2');
                 polygons3Data.features.forEach(f => f.properties.source_layer = 'polygons3');
                 linesData.features.forEach(f => f.properties.source_layer = 'lines');
 
-                // Объединяем все фичи в один массив
+                // Combine all features into a single array
                 const allFeatures = [
                     ...polygons1Data.features,
                     ...polygons2Data.features,
@@ -439,56 +465,74 @@
                     ...linesData.features
                 ];
 
-                // Сортируем по layer_order (если нет - в конец)
+                // Sort by layer_order (features without layer_order go last)
                 allFeatures.sort((a, b) => {
                     const orderA = a.properties.layer_order !== undefined ? a.properties.layer_order : Infinity;
                     const orderB = b.properties.layer_order !== undefined ? b.properties.layer_order : Infinity;
                     return orderA - orderB;
                 });
 
-                console.log(`✓ Отсортировано ${allFeatures.length} объектов по layer_order`);
+                console.log(`✓ Sorted ${allFeatures.length} features by layer_order`);
 
-                // Создаём единый GeoJSON объект
+                // Create combined GeoJSON object
                 const combinedGeoJSON = {
                     type: 'FeatureCollection',
                     features: allFeatures
                 };
 
-                // Создаём единый слой
+                // ========================================
+                // CREATE COMBINED LAYER
+                // ========================================
+
                 combinedLayer = L.geoJSON(combinedGeoJSON, {
                     style: getFeatureStyle,
                     onEachFeature: function(feature, layer) {
                         const props = feature.properties;
                         const sourceLayer = props.source_layer;
 
-                        // Popup только для участков земли (polygons1)
+                        // Configure popups and interactions for land plots
                         if (sourceLayer === 'polygons1') {
                             let popupContent = '';
                             let hasData = false;
 
                             if (props.Field_Number) {
-                                popupContent += `<div class="popup-info"><b>Номер:</b> ${props.Field_Number}</div>`;
+                                popupContent += `<div class="popup-info"><b>Number:</b> ${props.Field_Number}</div>`;
                                 hasData = true;
                             }
                             if (props['First and last name of the owners']) {
-                                popupContent += `<div class="popup-info"><b>Владелец:</b> ${props['First and last name of the owners']}</div>`;
+                                popupContent += `<div class="popup-info"><b>Owner:</b> ${props['First and last name of the owners']}</div>`;
                                 hasData = true;
                             }
                             if (props['Length of land plots']) {
-                                popupContent += `<div class="popup-info"><b>Длина:</b> ${props['Length of land plots']}</div>`;
+                                popupContent += `<div class="popup-info"><b>Length:</b> ${props['Length of land plots']}</div>`;
                                 hasData = true;
                             }
                             if (props['Width of land plots']) {
-                                popupContent += `<div class="popup-info"><b>Ширина:</b> ${props['Width of land plots']}</div>`;
+                                popupContent += `<div class="popup-info"><b>Width:</b> ${props['Width of land plots']}</div>`;
                                 hasData = true;
                             }
 
-                            // Привязываем popup только если есть данные
+                            // Bind popup only if there is data
                             if (hasData) {
                                 layer.bindPopup(popupContent);
+
+                                // Add event listener for when popup opens
+                                layer.on('popupopen', function() {
+                                    // Highlight corresponding row in table
+                                    document.querySelectorAll('#data-table tbody tr.selected').forEach(row => {
+                                        row.classList.remove('selected');
+                                    });
+                                    document.querySelectorAll('#data-table tbody tr').forEach(row => {
+                                        if (row.dataset.fid == props.fid) {
+                                            row.classList.add('selected');
+                                            // Scroll row into view
+                                            row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                        }
+                                    });
+                                });
                             }
 
-                            // Метка с номером участка
+                            // Create plot number marker
                             if (props.Field_Number) {
                                 const center = layer.getBounds().getCenter();
                                 const marker = L.marker(center, {
@@ -500,11 +544,18 @@
                                     })
                                 });
 
-                                // Добавляем маркер в группу номеров
+                                // Click on marker opens popup from parent polygon
+                                marker.on('click', function(e) {
+                                    if (layer.getPopup()) {
+                                        layer.openPopup(e.latlng);
+                                    }
+                                });
+
+                                // Add marker to plot numbers group
                                 fieldLabelsGroup.addLayer(marker);
                             }
 
-                            // Hover эффекты
+                            // Hover effects for land plots
                             layer.on('mouseover', function() {
                                 layer.setStyle({weight: 4, fillOpacity: 0.9});
                             });
@@ -513,19 +564,18 @@
                             });
                         }
 
-                        // Для домов и частей участков - показываем popup участка под ними
+                        // Buildings and subdivisions: show popup from underlying land plot
                         if (sourceLayer === 'polygons2' || sourceLayer === 'polygons3') {
                             layer.on('click', function(e) {
-                                // Ищем участок земли (polygons1) под кликом
                                 const clickedPoint = e.latlng;
 
+                                // Find land plot (polygons1) under the clicked point
                                 combinedLayer.eachLayer(function(l) {
                                     if (l.feature &&
                                         l.feature.properties.source_layer === 'polygons1' &&
                                         l.getBounds &&
                                         l.getBounds().contains(clickedPoint)) {
 
-                                        // Если у участка есть popup, открываем его
                                         if (l.getPopup()) {
                                             l.openPopup(clickedPoint);
                                         }
@@ -534,8 +584,11 @@
                             });
                         }
 
-                        // Текст вдоль линии для улиц с названием
+                        // Street names along lines
                         if (sourceLayer === 'lines' && props['Street name'] && props['Street name'] !== null && props['Street name'] !== '') {
+                            // Store street name for later use
+                            layer._streetName = props['Street name'];
+
                             layer.setText(props['Street name'], {
                                 repeat: false,
                                 center: true,
@@ -546,21 +599,21 @@
                                 }
                             });
 
-                            // Сохраняем линию для управления видимостью названий
+                            // Store for visibility management
                             streetLayers.push(layer);
                         }
                     }
                 }).addTo(map);
 
-                console.log('✓ Единый слой создан и добавлен на карту');
+                console.log('✓ Combined layer created and added to map');
 
-                // Создаём группу, объединяющую историческую карту и номера участков
+                // Create group combining historical map and plot numbers
                 const historicalMapGroup = L.layerGroup([combinedLayer, fieldLabelsGroup]).addTo(map);
 
-                // Добавляем контроль слоёв (оба как checkbox'ы)
+                // Add layer control (both as checkboxes)
                 const overlayMaps = {
                     "OpenStreetMap": osmLayer,
-                    "Историческая карта 1888": historicalMapGroup
+                    "Historical Map 1888": historicalMapGroup
                 };
 
                 L.control.layers(null, overlayMaps, {
@@ -569,19 +622,18 @@
                 }).addTo(map);
 
                 // ========================================
-                // УПРАВЛЕНИЕ ВИДИМОСТЬЮ НОМЕРОВ УЧАСТКОВ И НАЗВАНИЙ УЛИЦ
+                // LABEL VISIBILITY MANAGEMENT
                 // ========================================
 
-                // Функция для обновления видимости номеров и названий улиц в зависимости от масштаба
+                // Update visibility of plot numbers and street names based on zoom level
                 function updateLabelsVisibility() {
                     const zoom = map.getZoom();
-                    const minZoom = 18; // Минимальный зоом для отображения надписей
 
-                    // Скрываем/показываем номера участков
+                    // Toggle plot number visibility
                     fieldLabelsGroup.eachLayer(marker => {
                         const element = marker.getElement();
                         if (element) {
-                            if (zoom >= minZoom) {
+                            if (zoom >= minZoomForLabels) {
                                 element.classList.remove('field-label-hidden');
                             } else {
                                 element.classList.add('field-label-hidden');
@@ -589,45 +641,41 @@
                         }
                     });
 
-                    // Скрываем/показываем названия улиц
-                    streetLayers.forEach(streetLayer => {
-                        const pathElement = streetLayer._path;
-                        if (pathElement) {
-                            // Ищем текстовые элементы внутри SVG
-                            const textElements = pathElement.parentElement.querySelectorAll('text.leaflet-text-path');
-                            textElements.forEach(textElement => {
-                                if (zoom >= minZoom) {
-                                    textElement.classList.remove('leaflet-text-path-hidden');
-                                } else {
-                                    textElement.classList.add('leaflet-text-path-hidden');
-                                }
-                            });
+                    // Toggle street name visibility via CSS class
+                    const allTextElements = document.querySelectorAll('text.leaflet-text-path');
+                    allTextElements.forEach(el => {
+                        if (zoom >= minZoomForLabels) {
+                            el.classList.remove('leaflet-text-path-hidden');
+                        } else {
+                            el.classList.add('leaflet-text-path-hidden');
                         }
                     });
                 }
 
-                // Вызываем при первой загрузке
+                // Initialize label visibility
                 updateLabelsVisibility();
 
-                // Обработчик изменения масштаба
-                map.on('zoomend', updateLabelsVisibility);
+                // Update on zoom and move events
+                // moveend is needed because leaflet-textpath plugin redraws text on map pan
+                map.on('zoomend moveend', updateLabelsVisibility);
 
                 // ========================================
-                // ЗАПОЛНЕНИЕ ТАБЛИЦЫ ДАННЫМИ
+                // POPULATE TABLE
                 // ========================================
 
                 saveTableData(allFeatures);
                 populateTable(allTableData);
             })
             .catch(error => {
-                console.error('Ошибка загрузки слоёв:', error);
-                alert('Не удалось загрузить данные карты. Проверьте наличие файлов в папке data/');
+                console.error('Error loading layers:', error);
+                alert('Failed to load map data. Please check that files exist in the data/ folder.');
             });
 
             // ========================================
-            // ФУНКЦИИ ДЛЯ РАБОТЫ С ТАБЛИЦЕЙ
+            // TABLE POPULATION FUNCTIONS
             // ========================================
 
+            // Populate table with feature data
             function populateTable(features) {
                 const tableBody = document.getElementById('data-table-body');
                 tableBody.innerHTML = '';
@@ -639,80 +687,179 @@
 
                     const row = document.createElement('tr');
                     row.dataset.featureIndex = index;
+                    row.dataset.fid = props.fid; // Unique feature ID for lookup
 
-                    // Номер участка
                     const displayNumber = props.Field_Number || '-';
-
-                    // Владелец
-                    let owner = '-';
-                    if (props['First and last name of the owners']) {
-                        owner = props['First and last name of the owners'];
-                    }
-
-                    // Длина
+                    const owner = props['First and last name of the owners'] || '-';
                     const length = props['Length of land plots'] || '-';
-
-                    // Ширина
                     const width = props['Width of land plots'] || '-';
 
                     row.innerHTML = `
                         <td>${displayNumber}</td>
-                        <td><span class="type-badge type-land">Участок</span></td>
                         <td>${owner}</td>
                         <td>${length}</td>
                         <td>${width}</td>
                     `;
 
+                    // Click row to open popup on map
+                    row.addEventListener('click', function() {
+                        openPopupForPlot(this.dataset.fid);
+                    });
+
                     tableBody.appendChild(row);
                     rowCount++;
                 });
 
-                console.log(`✓ Таблица заполнена: ${rowCount} записей`);
+                console.log(`✓ Table populated: ${rowCount} entries`);
 
-                // Обновляем заголовок с количеством записей
+                // Update header with count
                 document.getElementById('sidebar-header').textContent =
-                    `База данных участков (${rowCount})`;
+                    `Land Plots Database (${rowCount})`;
+            }
+
+            // Open popup for a specific plot on the map (called from table row click)
+            function openPopupForPlot(fid) {
+                if (!combinedLayer) return;
+
+                // Clear previous table selection
+                document.querySelectorAll('#data-table tbody tr.selected').forEach(row => {
+                    row.classList.remove('selected');
+                });
+
+                // Highlight selected row
+                document.querySelectorAll('#data-table tbody tr').forEach(row => {
+                    if (row.dataset.fid == fid) {
+                        row.classList.add('selected');
+                    }
+                });
+
+                // Find layer by unique feature ID
+                combinedLayer.eachLayer(function(layer) {
+                    if (layer.feature &&
+                        layer.feature.properties.source_layer === 'polygons1' &&
+                        layer.feature.properties.fid == fid) {
+
+                        const center = layer.getBounds().getCenter();
+
+                        // Pan and zoom to plot
+                        map.setView(center, Math.max(map.getZoom(), 18));
+
+                        // Open popup
+                        if (layer.getPopup()) {
+                            layer.openPopup();
+                        }
+                    }
+                });
             }
 
             // ========================================
-            // ПОИСК В ТАБЛИЦЕ
+            // SEARCH AND SORT IN TABLE
             // ========================================
 
             let allTableData = [];
+            let currentSortColumn = 'number'; // Default sort by plot number
+            let currentSortDirection = 'asc'; // ascending
 
-            // Сохраняем данные для поиска
+            // Save data for search and sort
             function saveTableData(features) {
                 allTableData = features.filter(feature => {
                     const sourceLayer = feature.properties.source_layer;
                     const props = feature.properties;
 
-                    // Только участки земли (polygons1) с номером участка
+                    // Only land plots (polygons1) with plot number
                     return sourceLayer === 'polygons1' &&
                            props.Field_Number !== null &&
                            props.Field_Number !== undefined &&
                            props.Field_Number !== '';
                 });
+
+                // Apply default sorting by number
+                sortTableData('number', 'asc');
             }
 
-            // Функция поиска
+            // Sort table data
+            function sortTableData(column, direction) {
+                allTableData.sort((a, b) => {
+                    let valueA, valueB;
+
+                    switch(column) {
+                        case 'number':
+                            valueA = parseInt(a.properties.Field_Number) || 0;
+                            valueB = parseInt(b.properties.Field_Number) || 0;
+                            break;
+                        case 'owner':
+                            valueA = (a.properties['First and last name of the owners'] || '').toLowerCase();
+                            valueB = (b.properties['First and last name of the owners'] || '').toLowerCase();
+                            break;
+                        case 'length':
+                            valueA = parseFloat(a.properties['Length of land plots']) || 0;
+                            valueB = parseFloat(b.properties['Length of land plots']) || 0;
+                            break;
+                        case 'width':
+                            valueA = parseFloat(a.properties['Width of land plots']) || 0;
+                            valueB = parseFloat(b.properties['Width of land plots']) || 0;
+                            break;
+                        default:
+                            return 0;
+                    }
+
+                    if (valueA < valueB) return direction === 'asc' ? -1 : 1;
+                    if (valueA > valueB) return direction === 'asc' ? 1 : -1;
+                    return 0;
+                });
+            }
+
+            // Handle column header click for sorting
+            function handleSort(column) {
+                // Toggle direction if clicking the same column
+                if (currentSortColumn === column) {
+                    currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+                } else {
+                    currentSortColumn = column;
+                    currentSortDirection = 'asc';
+                }
+
+                sortTableData(currentSortColumn, currentSortDirection);
+
+                // Get current search term and re-populate table
+                const searchTerm = document.getElementById('search-input').value;
+                if (searchTerm.trim() !== '') {
+                    searchTable(searchTerm);
+                } else {
+                    populateTable(allTableData);
+                }
+
+                // Update visual indicators
+                updateSortIndicators();
+            }
+
+            // Update sort indicators in table headers
+            function updateSortIndicators() {
+                document.querySelectorAll('#data-table th').forEach(th => {
+                    th.classList.remove('sort-asc', 'sort-desc');
+                    const sortColumn = th.getAttribute('data-sort');
+                    if (sortColumn === currentSortColumn) {
+                        th.classList.add(currentSortDirection === 'asc' ? 'sort-asc' : 'sort-desc');
+                    }
+                });
+            }
+
+            // Search table by plot number or owner name
             function searchTable(searchTerm) {
                 const term = searchTerm.toLowerCase().trim();
 
                 if (term === '') {
-                    // Показываем все данные
                     populateTable(allTableData);
                     return;
                 }
 
-                // Фильтруем данные
+                // Filter by plot number or owner name
                 const filtered = allTableData.filter(feature => {
                     const props = feature.properties;
 
-                    // Поиск по номеру участка
                     const fieldNumber = String(props.Field_Number || '').toLowerCase();
                     if (fieldNumber.includes(term)) return true;
 
-                    // Поиск по имени владельца
                     const owner = String(props['First and last name of the owners'] || '').toLowerCase();
                     if (owner.includes(term)) return true;
 
@@ -722,7 +869,7 @@
                 populateTable(filtered);
             }
 
-            // Обработчик поиска (с задержкой для оптимизации)
+            // Search handler (with delay for optimization)
             let searchTimeout;
             document.getElementById('search-input').addEventListener('input', function(e) {
                 clearTimeout(searchTimeout);
@@ -730,50 +877,61 @@
                     searchTable(e.target.value);
                 }, 300);
             });
+
+            // Add click handlers to table headers for sorting
+            document.querySelectorAll('#data-table th[data-sort]').forEach(th => {
+                th.addEventListener('click', function() {
+                    const column = this.getAttribute('data-sort');
+                    handleSort(column);
+                });
+            });
+
+            // Initialize sort indicators
+            updateSortIndicators();
             
             // ========================================
-            // ЛЕГЕНДА
+            // MAP LEGEND
             // ========================================
-            
+
             const legend = L.control({position: 'bottomright'});
-            
+
             legend.onAdd = function(map) {
                 const div = L.DomUtil.create('div', 'legend');
                 div.innerHTML = `
-                    <div class="legend-title">Легенда</div>
+                    <div class="legend-title">Legend</div>
                     <div class="legend-item">
                         <span class="legend-color" style="background:#90EE90; border-color:#2d5f2d;"></span>
-                        Участки земли
+                        Land plots
                     </div>
                     <div class="legend-item">
                         <span class="legend-color" style="background:#FFB6C1; border-color:#C71585;"></span>
-                        Части участков
+                        Plot subdivisions
                     </div>
                     <div class="legend-item">
                         <span class="legend-color" style="background:#FFD700; border-color:#DAA520;"></span>
-                        Дома
+                        Buildings
                     </div>
                     <div class="legend-item">
                         <span class="legend-color" style="background:#808080;"></span>
-                        Границы улиц
+                        Street boundaries
                     </div>
                 `;
                 return div;
             };
-            
+
             legend.addTo(map);
-            
+
             // ========================================
-            // МАСШТАБ
+            // MAP SCALE
             // ========================================
-            
+
             L.control.scale({
                 imperial: false,
                 metric: true,
                 position: 'bottomleft'
             }).addTo(map);
-            
-            console.log('🗺️ Карта инициализирована! Центр:', mapCenter, 'Zoom:', initialZoom);
+
+            console.log('🗺️ Map initialized! Center:', mapCenter, 'Zoom:', initialZoom);
         });
     </script>
 </body>
