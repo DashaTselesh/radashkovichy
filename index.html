@@ -730,8 +730,8 @@
                                 popupContent += `<div class="popup-info"><b>Number:</b> ${props.Field_Number}</div>`;
                                 hasData = true;
                             }
-                            if (props['First and last name of the owners']) {
-                                popupContent += `<div class="popup-info"><b>Owner Name (translit):</b> ${props['First and last name of the owners']}</div>`;
+                            if (props['Name native']) {
+                                popupContent += `<div class="popup-info"><b>Owner Name (translit):</b> ${props['Name native']}</div>`;
                                 hasData = true;
                             }
                             if (props['Length of land plots']) {
@@ -1104,7 +1104,7 @@
                     const displayNumber = isMap2 ? (props.Number || '-') : (props.Field_Number || '-');
                     const owner = isMap2
                         ? (props['Name translit'] || props['Name native'] || '-')
-                        : (props['First and last name of the owners'] || '-');
+                        : (props['Name native'] || '-');
                     const ownerNative = isMap2 ? (props['Name native'] || '-') : '-';
                     const planPart = isMap2 ? (props['Plan part'] || '-') : '-';
                     const length = isMap2 ? (props.Length || '-') : (props['Length of land plots'] || '-');
@@ -1316,12 +1316,12 @@
                             if (isMap2A) {
                                 valueA = (propsA['Name translit'] || propsA['Name native'] || '').toLowerCase();
                             } else {
-                                valueA = (propsA['First and last name of the owners'] || '').toLowerCase();
+                                valueA = (propsA['Name native'] || '').toLowerCase();
                             }
                             if (isMap2B) {
                                 valueB = (propsB['Name translit'] || propsB['Name native'] || '').toLowerCase();
                             } else {
-                                valueB = (propsB['First and last name of the owners'] || '').toLowerCase();
+                                valueB = (propsB['Name native'] || '').toLowerCase();
                             }
                             break;
                         case 'ownernative':
@@ -1412,7 +1412,7 @@
                         // Check owner name (translit)
                         const owner = isMap2
                             ? String(props['Name translit'] || props['Name native'] || '').toLowerCase()
-                            : String(props['First and last name of the owners'] || '').toLowerCase();
+                            : String(props['Name native'] || '').toLowerCase();
                         if (owner.includes(searchTerm)) matchesSearch = true;
 
                         // Check owner name (native)
@@ -1444,7 +1444,7 @@
                             }
                         } else {
                             // For Map1, check the owner field
-                            const owner = String(props['First and last name of the owners'] || '').toLowerCase();
+                            const owner = String(props['Name native'] || '').toLowerCase();
                             if (owner.includes(ownerFilter)) {
                                 matchesOwner = true;
                             }
