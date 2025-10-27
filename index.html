@@ -77,6 +77,137 @@
             font-size: 14px;
             border: 1px solid #ccc;
             border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        .filters-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .filter-group {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .filter-label {
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 4px;
+            color: #555;
+        }
+
+        .filter-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .filter-input,
+        .filter-select {
+            padding: 6px 28px 6px 8px;
+            font-size: 13px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: white;
+            flex: 1;
+        }
+
+        .filter-select {
+            cursor: pointer;
+        }
+
+        .clear-filter {
+            position: absolute;
+            right: 6px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #999;
+            font-size: 16px;
+            padding: 2px 6px;
+            display: none;
+            background: transparent;
+            border: none;
+            line-height: 1;
+        }
+
+        .clear-filter:hover {
+            color: #d32f2f;
+        }
+
+        .filter-wrapper.has-value .clear-filter {
+            display: block;
+        }
+
+        /* Multiselect dropdown */
+        .multiselect-dropdown {
+            position: relative;
+            width: 100%;
+        }
+
+        .multiselect-selected {
+            padding: 6px 28px 6px 8px;
+            font-size: 13px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+            min-height: 30px;
+            display: flex;
+            align-items: center;
+        }
+
+        .multiselect-selected:hover {
+            border-color: #999;
+        }
+
+        .multiselect-options {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            max-height: 200px;
+            overflow-y: auto;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-top: 2px;
+            display: none;
+            z-index: 1000;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        .multiselect-options.show {
+            display: block;
+        }
+
+        .multiselect-option {
+            padding: 6px 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            font-size: 13px;
+        }
+
+        .multiselect-option:hover {
+            background: #f5f5f5;
+        }
+
+        .multiselect-option input[type="checkbox"] {
+            margin-right: 8px;
+        }
+
+        .multiselect-placeholder {
+            color: #999;
+        }
+
+        .multiselect-count {
+            color: #2c5f2d;
+            font-weight: bold;
         }
 
         #table-container {
@@ -353,6 +484,39 @@
 
             <div id="sidebar-controls">
                 <input type="text" id="search-input" placeholder="Search by plot number or owner...">
+
+                <div class="filters-row">
+                    <div class="filter-group">
+                        <label class="filter-label">Owner Name:</label>
+                        <div class="filter-wrapper" id="owner-filter-wrapper">
+                            <input type="text" id="filter-owner" class="filter-input" placeholder="Filter by owner...">
+                            <button class="clear-filter" id="clear-owner" title="Clear filter">×</button>
+                        </div>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Plan Part:</label>
+                        <div class="filter-wrapper">
+                            <div class="multiselect-dropdown" id="planpart-multiselect">
+                                <div class="multiselect-selected">
+                                    <span class="multiselect-placeholder">Select Plan Parts...</span>
+                                </div>
+                                <div class="multiselect-options"></div>
+                            </div>
+                            <button class="clear-filter" id="clear-planpart" title="Clear selection" style="display: none;">×</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="filters-row">
+                    <div class="filter-group">
+                        <label class="filter-label">Map:</label>
+                        <select id="filter-map" class="filter-select" style="padding: 6px 8px;">
+                            <option value="">All Maps</option>
+                            <option value="map1">Map 1</option>
+                            <option value="map2">Map 2</option>
+                        </select>
+                    </div>
+                </div>
             </div>
 
             <div id="table-container">
@@ -1042,9 +1206,97 @@
                 // Combine both datasets
                 allTableData = [...map1Data, ...map2Data];
 
+                // Populate Plan part filter options
+                populatePlanPartFilter();
+
                 // Apply default sorting by number
                 sortTableData('number', 'asc');
             }
+
+            // Track selected plan parts
+            let selectedPlanParts = new Set();
+
+            // Populate Plan part multiselect with unique values
+            function populatePlanPartFilter() {
+                const uniquePlanParts = new Set();
+
+                // Collect unique Plan part values from map2 data
+                allTableData.forEach(feature => {
+                    const props = feature.properties;
+                    const isMap2 = props.source_layer === 'map2-polygons1';
+
+                    if (isMap2 && props['Plan part']) {
+                        uniquePlanParts.add(props['Plan part']);
+                    }
+                });
+
+                // Get the options container
+                const optionsContainer = document.querySelector('#planpart-multiselect .multiselect-options');
+                optionsContainer.innerHTML = '';
+
+                // Add checkboxes for each unique plan part
+                Array.from(uniquePlanParts).sort().forEach(planPart => {
+                    const option = document.createElement('div');
+                    option.className = 'multiselect-option';
+
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.value = planPart;
+                    checkbox.id = `planpart-${planPart}`;
+
+                    const label = document.createElement('label');
+                    label.textContent = planPart;
+                    label.htmlFor = `planpart-${planPart}`;
+                    label.style.cursor = 'pointer';
+                    label.style.flex = '1';
+
+                    option.appendChild(checkbox);
+                    option.appendChild(label);
+
+                    // Handle checkbox change
+                    checkbox.addEventListener('change', function() {
+                        if (this.checked) {
+                            selectedPlanParts.add(this.value);
+                        } else {
+                            selectedPlanParts.delete(this.value);
+                        }
+                        updatePlanPartDisplay();
+                        applyFilters();
+                    });
+
+                    optionsContainer.appendChild(option);
+                });
+
+                // Initialize display
+                updatePlanPartDisplay();
+            }
+
+            // Update the multiselect display text
+            function updatePlanPartDisplay() {
+                const selectedDiv = document.querySelector('#planpart-multiselect .multiselect-selected');
+                const clearButton = document.getElementById('clear-planpart');
+
+                if (selectedPlanParts.size === 0) {
+                    selectedDiv.innerHTML = '<span class="multiselect-placeholder">Select Plan Parts...</span>';
+                    clearButton.style.display = 'none';
+                } else {
+                    selectedDiv.innerHTML = `<span class="multiselect-count">${selectedPlanParts.size} selected</span>`;
+                    clearButton.style.display = 'block';
+                }
+            }
+
+            // Toggle multiselect dropdown
+            document.addEventListener('click', function(e) {
+                const multiselect = document.getElementById('planpart-multiselect');
+                const selected = multiselect.querySelector('.multiselect-selected');
+                const options = multiselect.querySelector('.multiselect-options');
+
+                if (selected.contains(e.target)) {
+                    options.classList.toggle('show');
+                } else if (!multiselect.contains(e.target)) {
+                    options.classList.remove('show');
+                }
+            });
 
             // Sort table data
             function sortTableData(column, direction) {
@@ -1110,13 +1362,8 @@
 
                 sortTableData(currentSortColumn, currentSortDirection);
 
-                // Get current search term and re-populate table
-                const searchTerm = document.getElementById('search-input').value;
-                if (searchTerm.trim() !== '') {
-                    searchTable(searchTerm);
-                } else {
-                    populateTable(allTableData);
-                }
+                // Re-apply all filters after sorting
+                applyFilters();
 
                 // Update visual indicators
                 updateSortIndicators();
@@ -1133,46 +1380,95 @@
                 });
             }
 
-            // Search table by plot number or owner name
-            function searchTable(searchTerm) {
-                const term = searchTerm.toLowerCase().trim();
+            // Apply all filters (search + owner + plan part + map)
+            function applyFilters() {
+                // Get all filter values
+                const searchTerm = document.getElementById('search-input').value.toLowerCase().trim();
+                const ownerFilter = document.getElementById('filter-owner').value.toLowerCase().trim();
+                const mapFilter = document.getElementById('filter-map').value;
 
-                if (term === '') {
-                    populateTable(allTableData);
-                    return;
-                }
+                // Update clear button visibility
+                updateClearButtonVisibility();
 
-                // Filter by plot number, owner name, owner name native, or plan part
+                // Filter data
                 const filtered = allTableData.filter(feature => {
                     const props = feature.properties;
                     const isMap2 = props.source_layer === 'map2-polygons1';
 
-                    // Check plot number
-                    const fieldNumber = String(isMap2 ? (props.Number || '') : (props.Field_Number || '')).toLowerCase();
-                    if (fieldNumber.includes(term)) return true;
-
-                    // Check owner name (translit)
-                    const owner = isMap2
-                        ? String(props['Name translit'] || props['Name native'] || '').toLowerCase()
-                        : String(props['First and last name of the owners'] || '').toLowerCase();
-                    if (owner.includes(term)) return true;
-
-                    // Check owner name (native)
-                    if (isMap2) {
-                        const ownerNative = String(props['Name native'] || '').toLowerCase();
-                        if (ownerNative.includes(term)) return true;
+                    // Filter by map number
+                    if (mapFilter !== '') {
+                        if (mapFilter === 'map1' && isMap2) return false;
+                        if (mapFilter === 'map2' && !isMap2) return false;
                     }
 
-                    // Check plan part
-                    if (isMap2) {
-                        const planPart = String(props['Plan part'] || '').toLowerCase();
-                        if (planPart.includes(term)) return true;
+                    // Filter by search term (plot number or owner)
+                    if (searchTerm !== '') {
+                        let matchesSearch = false;
+
+                        // Check plot number
+                        const fieldNumber = String(isMap2 ? (props.Number || '') : (props.Field_Number || '')).toLowerCase();
+                        if (fieldNumber.includes(searchTerm)) matchesSearch = true;
+
+                        // Check owner name (translit)
+                        const owner = isMap2
+                            ? String(props['Name translit'] || props['Name native'] || '').toLowerCase()
+                            : String(props['First and last name of the owners'] || '').toLowerCase();
+                        if (owner.includes(searchTerm)) matchesSearch = true;
+
+                        // Check owner name (native)
+                        if (isMap2) {
+                            const ownerNative = String(props['Name native'] || '').toLowerCase();
+                            if (ownerNative.includes(searchTerm)) matchesSearch = true;
+                        }
+
+                        // Check plan part
+                        if (isMap2) {
+                            const planPart = String(props['Plan part'] || '').toLowerCase();
+                            if (planPart.includes(searchTerm)) matchesSearch = true;
+                        }
+
+                        if (!matchesSearch) return false;
                     }
 
-                    return false;
+                    // Filter by owner name
+                    if (ownerFilter !== '') {
+                        let matchesOwner = false;
+
+                        if (isMap2) {
+                            // For Map2, check both translit AND native fields
+                            const ownerTranslit = String(props['Name translit'] || '').toLowerCase();
+                            const ownerNative = String(props['Name native'] || '').toLowerCase();
+
+                            if (ownerTranslit.includes(ownerFilter) || ownerNative.includes(ownerFilter)) {
+                                matchesOwner = true;
+                            }
+                        } else {
+                            // For Map1, check the owner field
+                            const owner = String(props['First and last name of the owners'] || '').toLowerCase();
+                            if (owner.includes(ownerFilter)) {
+                                matchesOwner = true;
+                            }
+                        }
+
+                        if (!matchesOwner) return false;
+                    }
+
+                    // Filter by plan part (multiselect)
+                    if (selectedPlanParts.size > 0) {
+                        if (!isMap2) return false; // Plan part only exists in map2
+                        const planPart = String(props['Plan part'] || '');
+                        if (!selectedPlanParts.has(planPart)) return false;
+                    }
+
+                    return true;
                 });
 
                 populateTable(filtered);
+            }
+
+            // Deprecated: kept for compatibility
+            function searchTable(searchTerm) {
+                applyFilters();
             }
 
             // Search handler (with delay for optimization)
@@ -1180,8 +1476,53 @@
             document.getElementById('search-input').addEventListener('input', function(e) {
                 clearTimeout(searchTimeout);
                 searchTimeout = setTimeout(() => {
-                    searchTable(e.target.value);
+                    applyFilters();
                 }, 300);
+            });
+
+            // Owner filter handler
+            let ownerFilterTimeout;
+            document.getElementById('filter-owner').addEventListener('input', function(e) {
+                clearTimeout(ownerFilterTimeout);
+                ownerFilterTimeout = setTimeout(() => {
+                    applyFilters();
+                }, 300);
+            });
+
+            // Map filter handler
+            document.getElementById('filter-map').addEventListener('change', function(e) {
+                applyFilters();
+            });
+
+            // Update clear button visibility based on filter values
+            function updateClearButtonVisibility() {
+                const ownerInput = document.getElementById('filter-owner');
+                const ownerWrapper = document.getElementById('owner-filter-wrapper');
+                if (ownerInput.value.trim() !== '') {
+                    ownerWrapper.classList.add('has-value');
+                } else {
+                    ownerWrapper.classList.remove('has-value');
+                }
+            }
+
+            // Clear owner filter
+            document.getElementById('clear-owner').addEventListener('click', function(e) {
+                e.stopPropagation();
+                document.getElementById('filter-owner').value = '';
+                updateClearButtonVisibility();
+                applyFilters();
+            });
+
+            // Clear plan part filter
+            document.getElementById('clear-planpart').addEventListener('click', function(e) {
+                e.stopPropagation();
+                // Uncheck all checkboxes
+                selectedPlanParts.clear();
+                document.querySelectorAll('#planpart-multiselect input[type="checkbox"]').forEach(cb => {
+                    cb.checked = false;
+                });
+                updatePlanPartDisplay();
+                applyFilters();
             });
 
             // Add click handlers to table headers for sorting
