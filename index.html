@@ -71,13 +71,16 @@
             border-bottom: 1px solid #ccc;
         }
 
+        #search-wrapper {
+            margin-bottom: 10px;
+        }
+
         #search-input {
             width: 100%;
-            padding: 8px 12px;
+            padding: 8px 28px 8px 12px;
             font-size: 14px;
             border: 1px solid #ccc;
             border-radius: 4px;
-            margin-bottom: 10px;
         }
 
         .filters-row {
@@ -304,13 +307,15 @@
         .field-label {
             background: transparent;
             border: none;
-            padding: 0;
-            font-size: 14px;
+            padding: 2px 4px;
+            font-size: 12px;
             font-weight: bold;
             color: #2c5f2d;
             text-align: center;
             pointer-events: none;
             transition: opacity 0.3s;
+            white-space: nowrap;
+            overflow: visible;
         }
 
         .field-label-hidden {
@@ -483,7 +488,10 @@
             </div>
 
             <div id="sidebar-controls">
-                <input type="text" id="search-input" placeholder="Search by plot number or owner...">
+                <div class="filter-wrapper" id="search-wrapper">
+                    <input type="text" id="search-input" placeholder="Find anything in the table">
+                    <button class="clear-filter" id="clear-search" title="Clear search">×</button>
+                </div>
 
                 <div class="filters-row">
                     <div class="filter-group">
@@ -524,11 +532,16 @@
                     <thead>
                         <tr>
                             <th data-sort="number">No.</th>
-                            <th data-sort="owner">Owner Name (translit)</th>
-                            <th data-sort="ownernative">Owner Name (native)</th>
-                            <th data-sort="planpart">Plan part</th>
+                            <th data-sort="firstnametranslit">First name (translit)</th>
+                            <th data-sort="lastnametranslit">Last name (translit)</th>
+                            <th data-sort="patronymictranslit">Patronymic (translit)</th>
+                            <th data-sort="firstnamenative">First name (native)</th>
+                            <th data-sort="lastnamenative">Last name (native)</th>
+                            <th data-sort="patronymicnative">Patronymic (native)</th>
                             <th data-sort="length">Length</th>
                             <th data-sort="width">Width</th>
+                            <th data-sort="planpart">Plan part</th>
+                            <th data-sort="owneroriginal">Owner Name (original)</th>
                         </tr>
                     </thead>
                     <tbody id="data-table-body">
@@ -546,7 +559,7 @@
 
     <!-- Leaflet TextPath Plugin -->
     <script src="https://cdn.jsdelivr.net/npm/leaflet-textpath@1.2.3/leaflet.textpath.min.js"></script>
-    
+
     <script>
         // ========================================
         // APPLICATION INITIALIZATION
@@ -793,12 +806,17 @@
                             // Create plot number marker
                             if (props['Field number']) {
                                 const center = layer.getBounds().getCenter();
+
+                                // Check current zoom to set initial visibility
+                                const currentZoom = map.getZoom();
+                                const initialClass = currentZoom >= minZoomForLabels ? 'field-label' : 'field-label field-label-hidden';
+
                                 const marker = L.marker(center, {
                                     icon: L.divIcon({
-                                        className: 'field-label',
+                                        className: initialClass,
                                         html: props['Field number'],
-                                        iconSize: [20, 20],
-                                        iconAnchor: [10, 10]
+                                        iconSize: [30, 20],
+                                        iconAnchor: [15, 10]
                                     })
                                 });
 
@@ -903,12 +921,17 @@
                             // Create plot number marker
                             if (props['Field number']) {
                                 const center = layer.getBounds().getCenter();
+
+                                // Check current zoom to set initial visibility
+                                const currentZoom = map.getZoom();
+                                const initialClass = currentZoom >= minZoomForLabels ? 'field-label' : 'field-label field-label-hidden';
+
                                 const marker = L.marker(center, {
                                     icon: L.divIcon({
-                                        className: 'field-label',
+                                        className: initialClass,
                                         html: props['Field number'],
-                                        iconSize: [20, 20],
-                                        iconAnchor: [10, 10]
+                                        iconSize: [30, 20],
+                                        iconAnchor: [15, 10]
                                     })
                                 });
 
@@ -1074,6 +1097,39 @@
                 // moveend is needed because leaflet-textpath plugin redraws text on map pan
                 map.on('zoomend moveend', updateLabelsVisibility);
 
+                // Update label visibility when layers are added/removed via layer control
+                map.on('overlayadd', function(e) {
+                    // Check if the added layer contains our label groups
+                    const zoom = map.getZoom();
+                    const shouldHideLabels = zoom < minZoomForLabels;
+
+                    // Use requestAnimationFrame for faster, smoother update
+                    requestAnimationFrame(() => {
+                        // Apply visibility based on current zoom immediately
+                        fieldLabelsGroup.eachLayer(marker => {
+                            const element = marker.getElement();
+                            if (element) {
+                                if (shouldHideLabels) {
+                                    element.classList.add('field-label-hidden');
+                                } else {
+                                    element.classList.remove('field-label-hidden');
+                                }
+                            }
+                        });
+
+                        map2LabelsGroup.eachLayer(marker => {
+                            const element = marker.getElement();
+                            if (element) {
+                                if (shouldHideLabels) {
+                                    element.classList.add('field-label-hidden');
+                                } else {
+                                    element.classList.remove('field-label-hidden');
+                                }
+                            }
+                        });
+                    });
+                });
+
                 // ========================================
                 // POPULATE TABLE
                 // ========================================
@@ -1108,19 +1164,29 @@
 
                     // Extract data based on source
                     const displayNumber = props['Field number'] || '-';
-                    const owner = props['Name translit'] || props['Name native'] || '-';
-                    const ownerNative = props['Name native'] || '-';
-                    const planPart = isMap2 ? (props['Plan part en'] || '-') : '-';
+                    const firstNameTranslit = props['First name translit'] || '-';
+                    const lastNameTranslit = props['Last name translit'] || '-';
+                    const patronymicTranslit = props['Patronymic translit'] || '-';
+                    const firstNameNative = props['First name native'] || '-';
+                    const lastNameNative = props['Last name native'] || '-';
+                    const patronymicNative = props['Patronymic native'] || '-';
                     const length = isMap2 ? (props['Length of plot'] || '-') : (props['Length of plots'] || '-');
                     const width = isMap2 ? (props['Width of plot'] || '-') : (props['Width of plots'] || '-');
+                    const planPart = isMap2 ? (props['Plan part en'] || '-') : '-';
+                    const ownerOriginal = props['Name native'] || '-';
 
                     row.innerHTML = `
                         <td>${displayNumber}</td>
-                        <td>${owner}</td>
-                        <td>${ownerNative}</td>
-                        <td>${planPart}</td>
+                        <td>${firstNameTranslit}</td>
+                        <td>${lastNameTranslit}</td>
+                        <td>${patronymicTranslit}</td>
+                        <td>${firstNameNative}</td>
+                        <td>${lastNameNative}</td>
+                        <td>${patronymicNative}</td>
                         <td>${length}</td>
                         <td>${width}</td>
+                        <td>${planPart}</td>
+                        <td>${ownerOriginal}</td>
                     `;
 
                     // Click row to open popup on map
@@ -1316,25 +1382,29 @@
                             valueA = parseInt(propsA['Field number']) || 0;
                             valueB = parseInt(propsB['Field number']) || 0;
                             break;
-                        case 'owner':
-                            if (isMap2A) {
-                                valueA = (propsA['Name translit'] || propsA['Name native'] || '').toLowerCase();
-                            } else {
-                                valueA = (propsA['Name native'] || '').toLowerCase();
-                            }
-                            if (isMap2B) {
-                                valueB = (propsB['Name translit'] || propsB['Name native'] || '').toLowerCase();
-                            } else {
-                                valueB = (propsB['Name native'] || '').toLowerCase();
-                            }
+                        case 'firstnametranslit':
+                            valueA = (propsA['First name translit'] || '').toLowerCase();
+                            valueB = (propsB['First name translit'] || '').toLowerCase();
                             break;
-                        case 'ownernative':
-                            valueA = isMap2A ? (propsA['Name native'] || '').toLowerCase() : '';
-                            valueB = isMap2B ? (propsB['Name native'] || '').toLowerCase() : '';
+                        case 'lastnametranslit':
+                            valueA = (propsA['Last name translit'] || '').toLowerCase();
+                            valueB = (propsB['Last name translit'] || '').toLowerCase();
                             break;
-                        case 'planpart':
-                            valueA = isMap2A ? (propsA['Plan part en'] || '').toLowerCase() : '';
-                            valueB = isMap2B ? (propsB['Plan part en'] || '').toLowerCase() : '';
+                        case 'patronymictranslit':
+                            valueA = (propsA['Patronymic translit'] || '').toLowerCase();
+                            valueB = (propsB['Patronymic translit'] || '').toLowerCase();
+                            break;
+                        case 'firstnamenative':
+                            valueA = (propsA['First name native'] || '').toLowerCase();
+                            valueB = (propsB['First name native'] || '').toLowerCase();
+                            break;
+                        case 'lastnamenative':
+                            valueA = (propsA['Last name native'] || '').toLowerCase();
+                            valueB = (propsB['Last name native'] || '').toLowerCase();
+                            break;
+                        case 'patronymicnative':
+                            valueA = (propsA['Patronymic native'] || '').toLowerCase();
+                            valueB = (propsB['Patronymic native'] || '').toLowerCase();
                             break;
                         case 'length':
                             valueA = parseFloat(isMap2A ? propsA['Length of plot'] : propsA['Length of plots']) || 0;
@@ -1343,6 +1413,14 @@
                         case 'width':
                             valueA = parseFloat(isMap2A ? propsA['Width of plot'] : propsA['Width of plots']) || 0;
                             valueB = parseFloat(isMap2B ? propsB['Width of plot'] : propsB['Width of plots']) || 0;
+                            break;
+                        case 'planpart':
+                            valueA = isMap2A ? (propsA['Plan part en'] || '').toLowerCase() : '';
+                            valueB = isMap2B ? (propsB['Plan part en'] || '').toLowerCase() : '';
+                            break;
+                        case 'owneroriginal':
+                            valueA = (propsA['Name native'] || '').toLowerCase();
+                            valueB = (propsB['Name native'] || '').toLowerCase();
                             break;
                         default:
                             return 0;
@@ -1375,30 +1453,21 @@
                     if (!isMap2A && isMap2B) return -1; // plan 1888 before plan 1891
                     if (isMap2A && !isMap2B) return 1;  // plan 1891 after plan 1888
 
-                    // Within each plan, sort by owner name (translit)
-                    let ownerA, ownerB;
-                    if (isMap2A) {
-                        ownerA = (propsA['Name translit'] || propsA['Name native'] || '').toLowerCase();
-                    } else {
-                        ownerA = (propsA['Name native'] || '').toLowerCase();
-                    }
-                    if (isMap2B) {
-                        ownerB = (propsB['Name translit'] || propsB['Name native'] || '').toLowerCase();
-                    } else {
-                        ownerB = (propsB['Name native'] || '').toLowerCase();
-                    }
+                    // Within each plan, sort by last name
+                    const lastNameA = (propsA['Last name translit'] || propsA['Last name native'] || '').toLowerCase();
+                    const lastNameB = (propsB['Last name translit'] || propsB['Last name native'] || '').toLowerCase();
 
-                    // Check if owner names are empty
-                    const isEmptyA = !ownerA || ownerA === '' || ownerA === '-';
-                    const isEmptyB = !ownerB || ownerB === '' || ownerB === '-';
+                    // Check if last names are empty
+                    const isEmptyA = !lastNameA || lastNameA === '' || lastNameA === '-';
+                    const isEmptyB = !lastNameB || lastNameB === '' || lastNameB === '-';
 
-                    // Empty owner names always go last within their plan
+                    // Empty last names always go last within their plan
                     if (isEmptyA && !isEmptyB) return 1;
                     if (!isEmptyA && isEmptyB) return -1;
                     if (isEmptyA && isEmptyB) return 0;
 
-                    if (ownerA < ownerB) return -1;
-                    if (ownerA > ownerB) return 1;
+                    if (lastNameA < lastNameB) return -1;
+                    if (lastNameA > lastNameB) return 1;
                     return 0;
                 });
             }
@@ -1454,7 +1523,7 @@
                         if (mapFilter === 'map2' && !isMap2) return false;
                     }
 
-                    // Filter by search term (plot number or owner)
+                    // Filter by search term (plot number or any name field)
                     if (searchTerm !== '') {
                         let matchesSearch = false;
 
@@ -1462,17 +1531,33 @@
                         const fieldNumber = String(props['Field number'] || '').toLowerCase();
                         if (fieldNumber.includes(searchTerm)) matchesSearch = true;
 
-                        // Check owner name (translit)
-                        const owner = isMap2
-                            ? String(props['Name translit'] || props['Name native'] || '').toLowerCase()
-                            : String(props['Name native'] || '').toLowerCase();
-                        if (owner.includes(searchTerm)) matchesSearch = true;
-
-                        // Check owner name (native)
-                        if (isMap2) {
-                            const ownerNative = String(props['Name native'] || '').toLowerCase();
-                            if (ownerNative.includes(searchTerm)) matchesSearch = true;
+                        // Check all name fields (translit)
+                        const firstNameTranslit = String(props['First name translit'] || '').toLowerCase();
+                        const lastNameTranslit = String(props['Last name translit'] || '').toLowerCase();
+                        const patronymicTranslit = String(props['Patronymic translit'] || '').toLowerCase();
+                        if (firstNameTranslit.includes(searchTerm) || lastNameTranslit.includes(searchTerm) || patronymicTranslit.includes(searchTerm)) {
+                            matchesSearch = true;
                         }
+
+                        // Check all name fields (native)
+                        const firstNameNative = String(props['First name native'] || '').toLowerCase();
+                        const lastNameNative = String(props['Last name native'] || '').toLowerCase();
+                        const patronymicNative = String(props['Patronymic native'] || '').toLowerCase();
+                        if (firstNameNative.includes(searchTerm) || lastNameNative.includes(searchTerm) || patronymicNative.includes(searchTerm)) {
+                            matchesSearch = true;
+                        }
+
+                        // Check Owner Name (original)
+                        const ownerOriginal = String(props['Name native'] || '').toLowerCase();
+                        if (ownerOriginal.includes(searchTerm)) matchesSearch = true;
+
+                        // Check Length
+                        const length = String(isMap2 ? (props['Length of plot'] || '') : (props['Length of plots'] || '')).toLowerCase();
+                        if (length.includes(searchTerm)) matchesSearch = true;
+
+                        // Check Width
+                        const width = String(isMap2 ? (props['Width of plot'] || '') : (props['Width of plots'] || '')).toLowerCase();
+                        if (width.includes(searchTerm)) matchesSearch = true;
 
                         // Check plan part
                         if (isMap2) {
@@ -1487,20 +1572,26 @@
                     if (ownerFilter !== '') {
                         let matchesOwner = false;
 
-                        if (isMap2) {
-                            // For Map2, check both translit AND native fields
-                            const ownerTranslit = String(props['Name translit'] || '').toLowerCase();
-                            const ownerNative = String(props['Name native'] || '').toLowerCase();
+                        // Check all name fields (translit)
+                        const firstNameTranslit = String(props['First name translit'] || '').toLowerCase();
+                        const lastNameTranslit = String(props['Last name translit'] || '').toLowerCase();
+                        const patronymicTranslit = String(props['Patronymic translit'] || '').toLowerCase();
+                        if (firstNameTranslit.includes(ownerFilter) || lastNameTranslit.includes(ownerFilter) || patronymicTranslit.includes(ownerFilter)) {
+                            matchesOwner = true;
+                        }
 
-                            if (ownerTranslit.includes(ownerFilter) || ownerNative.includes(ownerFilter)) {
-                                matchesOwner = true;
-                            }
-                        } else {
-                            // For Map1, check the owner field
-                            const owner = String(props['Name native'] || '').toLowerCase();
-                            if (owner.includes(ownerFilter)) {
-                                matchesOwner = true;
-                            }
+                        // Check all name fields (native)
+                        const firstNameNative = String(props['First name native'] || '').toLowerCase();
+                        const lastNameNative = String(props['Last name native'] || '').toLowerCase();
+                        const patronymicNative = String(props['Patronymic native'] || '').toLowerCase();
+                        if (firstNameNative.includes(ownerFilter) || lastNameNative.includes(ownerFilter) || patronymicNative.includes(ownerFilter)) {
+                            matchesOwner = true;
+                        }
+
+                        // Check Owner Name (original)
+                        const ownerOriginal = String(props['Name native'] || '').toLowerCase();
+                        if (ownerOriginal.includes(ownerFilter)) {
+                            matchesOwner = true;
                         }
 
                         if (!matchesOwner) return false;
@@ -1549,6 +1640,16 @@
 
             // Update clear button visibility based on filter values
             function updateClearButtonVisibility() {
+                // Search input
+                const searchInput = document.getElementById('search-input');
+                const searchWrapper = document.getElementById('search-wrapper');
+                if (searchInput.value.trim() !== '') {
+                    searchWrapper.classList.add('has-value');
+                } else {
+                    searchWrapper.classList.remove('has-value');
+                }
+
+                // Owner filter input
                 const ownerInput = document.getElementById('filter-owner');
                 const ownerWrapper = document.getElementById('owner-filter-wrapper');
                 if (ownerInput.value.trim() !== '') {
@@ -1557,6 +1658,14 @@
                     ownerWrapper.classList.remove('has-value');
                 }
             }
+
+            // Clear search input
+            document.getElementById('clear-search').addEventListener('click', function(e) {
+                e.stopPropagation();
+                document.getElementById('search-input').value = '';
+                updateClearButtonVisibility();
+                applyFilters();
+            });
 
             // Clear owner filter
             document.getElementById('clear-owner').addEventListener('click', function(e) {
