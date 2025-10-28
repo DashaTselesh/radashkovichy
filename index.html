@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Radashkovichy map 1888</title>
+    <title>Radashkovichy Restoration Plans 1888-1891</title>
     
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"
@@ -509,11 +509,11 @@
 
                 <div class="filters-row">
                     <div class="filter-group">
-                        <label class="filter-label">Map:</label>
+                        <label class="filter-label">Plan:</label>
                         <select id="filter-map" class="filter-select" style="padding: 6px 8px;">
-                            <option value="">All Maps</option>
-                            <option value="map1">Map 1</option>
-                            <option value="map2">Map 2</option>
+                            <option value="">All Plans</option>
+                            <option value="map1">Restoration plan 1888</option>
+                            <option value="map2">Restoration plan 1891</option>
                         </select>
                     </div>
                 </div>
@@ -675,25 +675,22 @@
                 fetch('data/map1-polygons.geojson').then(r => r.json()),
                 fetch('data/map1-buildings.geojson').then(r => r.json()),
                 fetch('data/map1-buildings2.geojson').then(r => r.json()),
-                fetch('data/map1-lines.geojson').then(r => r.json()),
                 fetch('data/map2-polygons.geojson').then(r => r.json())
             ])
-            .then(([polygons1Data, polygons3Data, polygons2Data, linesData, map2PolygonsData]) => {
+            .then(([polygons1Data, polygons3Data, polygons2Data, map2PolygonsData]) => {
                 console.log('✓ All files loaded');
 
                 // Tag each feature with its source layer for proper styling
                 polygons1Data.features.forEach(f => f.properties.source_layer = 'polygons1');
                 polygons2Data.features.forEach(f => f.properties.source_layer = 'polygons2');
                 polygons3Data.features.forEach(f => f.properties.source_layer = 'polygons3');
-                linesData.features.forEach(f => f.properties.source_layer = 'lines');
                 map2PolygonsData.features.forEach(f => f.properties.source_layer = 'map2-polygons1');
 
                 // Combine all features into a single array
                 const allFeatures = [
                     ...polygons1Data.features,
                     ...polygons2Data.features,
-                    ...polygons3Data.features,
-                    ...linesData.features
+                    ...polygons3Data.features
                 ];
 
                 // Sort by layer_order (features without layer_order go last)
@@ -726,20 +723,20 @@
                             let popupContent = '';
                             let hasData = false;
 
-                            if (props.Field_Number) {
-                                popupContent += `<div class="popup-info"><b>Number:</b> ${props.Field_Number}</div>`;
+                            if (props['Field number']) {
+                                popupContent += `<div class="popup-info"><b>Field Number:</b> ${props['Field number']}</div>`;
                                 hasData = true;
                             }
                             if (props['Name native']) {
                                 popupContent += `<div class="popup-info"><b>Owner Name (translit):</b> ${props['Name native']}</div>`;
                                 hasData = true;
                             }
-                            if (props['Length of land plots']) {
-                                popupContent += `<div class="popup-info"><b>Length:</b> ${props['Length of land plots']}</div>`;
+                            if (props['Length of plots']) {
+                                popupContent += `<div class="popup-info"><b>Length:</b> ${props['Length of plots']} sazhens</div>`;
                                 hasData = true;
                             }
-                            if (props['Width of land plots']) {
-                                popupContent += `<div class="popup-info"><b>Width:</b> ${props['Width of land plots']}</div>`;
+                            if (props['Width of plots']) {
+                                popupContent += `<div class="popup-info"><b>Width:</b> ${props['Width of plots']} sazhens</div>`;
                                 hasData = true;
                             }
 
@@ -764,12 +761,12 @@
                             }
 
                             // Create plot number marker
-                            if (props.Field_Number) {
+                            if (props['Field number']) {
                                 const center = layer.getBounds().getCenter();
                                 const marker = L.marker(center, {
                                     icon: L.divIcon({
                                         className: 'field-label',
-                                        html: props.Field_Number,
+                                        html: props['Field number'],
                                         iconSize: [20, 20],
                                         iconAnchor: [10, 10]
                                     })
@@ -853,8 +850,8 @@
                             let popupContent = '';
                             let hasData = false;
 
-                            if (props.Number) {
-                                popupContent += `<div class="popup-info"><b>Number:</b> ${props.Number}</div>`;
+                            if (props['Field number']) {
+                                popupContent += `<div class="popup-info"><b>Field Number:</b> ${props['Field number']}</div>`;
                                 hasData = true;
                             }
                             if (props['Name translit']) {
@@ -865,12 +862,12 @@
                                 popupContent += `<div class="popup-info"><b>Owner Name (native):</b> ${props['Name native']}</div>`;
                                 hasData = true;
                             }
-                            if (props.Length) {
-                                popupContent += `<div class="popup-info"><b>Length:</b> ${props.Length}</div>`;
+                            if (props['Length of plot']) {
+                                popupContent += `<div class="popup-info"><b>Length:</b> ${props['Length of plot']} sazhens</div>`;
                                 hasData = true;
                             }
-                            if (props.Width) {
-                                popupContent += `<div class="popup-info"><b>Width:</b> ${props.Width}</div>`;
+                            if (props['Width of plot']) {
+                                popupContent += `<div class="popup-info"><b>Width:</b> ${props['Width of plot']} sazhens</div>`;
                                 hasData = true;
                             }
 
@@ -895,12 +892,12 @@
                             }
 
                             // Create plot number marker
-                            if (props.Number) {
+                            if (props['Field number']) {
                                 const center = layer.getBounds().getCenter();
                                 const marker = L.marker(center, {
                                     icon: L.divIcon({
                                         className: 'field-label',
-                                        html: props.Number,
+                                        html: props['Field number'],
                                         iconSize: [20, 20],
                                         iconAnchor: [10, 10]
                                     })
@@ -937,8 +934,8 @@
                 // Add layer control (both as checkboxes)
                 const overlayMaps = {
                     "OpenStreetMap": osmLayer,
-                    "Historical Map 1888": historicalMapGroup,
-                    "Map 2": map2Group
+                    "Restoration plan 1888": historicalMapGroup,
+                    "Restoration plan 1891": map2Group
                 };
 
                 L.control.layers(null, overlayMaps, {
@@ -967,8 +964,8 @@
                         container.innerHTML = `
                             <div class="map-navigation-title">Quick View:</div>
                             <div class="map-navigation-buttons">
-                                <button class="map-nav-btn" data-view="map1">Map 1</button>
-                                <button class="map-nav-btn" data-view="map2">Map 2</button>
+                                <button class="map-nav-btn" data-view="map1">Plan 1888</button>
+                                <button class="map-nav-btn" data-view="map2">Plan 1891</button>
                             </div>
                         `;
 
@@ -1101,14 +1098,12 @@
                     row.dataset.sourceLayer = props.source_layer; // Store source layer for lookup
 
                     // Extract data based on source
-                    const displayNumber = isMap2 ? (props.Number || '-') : (props.Field_Number || '-');
-                    const owner = isMap2
-                        ? (props['Name translit'] || props['Name native'] || '-')
-                        : (props['Name native'] || '-');
-                    const ownerNative = isMap2 ? (props['Name native'] || '-') : '-';
-                    const planPart = isMap2 ? (props['Plan part'] || '-') : '-';
-                    const length = isMap2 ? (props.Length || '-') : (props['Length of land plots'] || '-');
-                    const width = isMap2 ? (props.Width || '-') : (props['Width of land plots'] || '-');
+                    const displayNumber = props['Field number'] || '-';
+                    const owner = props['Name translit'] || props['Name native'] || '-';
+                    const ownerNative = props['Name native'] || '-';
+                    const planPart = isMap2 ? (props['Plan part en'] || '-') : '-';
+                    const length = isMap2 ? (props['Length of plot'] || '-') : (props['Length of plots'] || '-');
+                    const width = isMap2 ? (props['Width of plot'] || '-') : (props['Width of plots'] || '-');
 
                     row.innerHTML = `
                         <td>${displayNumber}</td>
@@ -1190,17 +1185,17 @@
                     const props = feature.properties;
 
                     return sourceLayer === 'polygons1' &&
-                           props.Field_Number !== null &&
-                           props.Field_Number !== undefined &&
-                           props.Field_Number !== '';
+                           props['Field number'] !== null &&
+                           props['Field number'] !== undefined &&
+                           props['Field number'] !== '';
                 });
 
-                // Filter map2 features with Number field
+                // Filter map2 features with Field number field
                 const map2Data = map2Features.filter(feature => {
                     const props = feature.properties;
-                    return props.Number !== null &&
-                           props.Number !== undefined &&
-                           props.Number !== '';
+                    return props['Field number'] !== null &&
+                           props['Field number'] !== undefined &&
+                           props['Field number'] !== '';
                 });
 
                 // Combine both datasets
@@ -1225,8 +1220,8 @@
                     const props = feature.properties;
                     const isMap2 = props.source_layer === 'map2-polygons1';
 
-                    if (isMap2 && props['Plan part']) {
-                        uniquePlanParts.add(props['Plan part']);
+                    if (isMap2 && props['Plan part en']) {
+                        uniquePlanParts.add(props['Plan part en']);
                     }
                 });
 
@@ -1309,8 +1304,8 @@
 
                     switch(column) {
                         case 'number':
-                            valueA = parseInt(isMap2A ? propsA.Number : propsA.Field_Number) || 0;
-                            valueB = parseInt(isMap2B ? propsB.Number : propsB.Field_Number) || 0;
+                            valueA = parseInt(propsA['Field number']) || 0;
+                            valueB = parseInt(propsB['Field number']) || 0;
                             break;
                         case 'owner':
                             if (isMap2A) {
@@ -1329,16 +1324,16 @@
                             valueB = isMap2B ? (propsB['Name native'] || '').toLowerCase() : '';
                             break;
                         case 'planpart':
-                            valueA = isMap2A ? (propsA['Plan part'] || '').toLowerCase() : '';
-                            valueB = isMap2B ? (propsB['Plan part'] || '').toLowerCase() : '';
+                            valueA = isMap2A ? (propsA['Plan part en'] || '').toLowerCase() : '';
+                            valueB = isMap2B ? (propsB['Plan part en'] || '').toLowerCase() : '';
                             break;
                         case 'length':
-                            valueA = parseFloat(isMap2A ? propsA.Length : propsA['Length of land plots']) || 0;
-                            valueB = parseFloat(isMap2B ? propsB.Length : propsB['Length of land plots']) || 0;
+                            valueA = parseFloat(isMap2A ? propsA['Length of plot'] : propsA['Length of plots']) || 0;
+                            valueB = parseFloat(isMap2B ? propsB['Length of plot'] : propsB['Length of plots']) || 0;
                             break;
                         case 'width':
-                            valueA = parseFloat(isMap2A ? propsA.Width : propsA['Width of land plots']) || 0;
-                            valueB = parseFloat(isMap2B ? propsB.Width : propsB['Width of land plots']) || 0;
+                            valueA = parseFloat(isMap2A ? propsA['Width of plot'] : propsA['Width of plots']) || 0;
+                            valueB = parseFloat(isMap2B ? propsB['Width of plot'] : propsB['Width of plots']) || 0;
                             break;
                         default:
                             return 0;
@@ -1406,7 +1401,7 @@
                         let matchesSearch = false;
 
                         // Check plot number
-                        const fieldNumber = String(isMap2 ? (props.Number || '') : (props.Field_Number || '')).toLowerCase();
+                        const fieldNumber = String(props['Field number'] || '').toLowerCase();
                         if (fieldNumber.includes(searchTerm)) matchesSearch = true;
 
                         // Check owner name (translit)
@@ -1423,7 +1418,7 @@
 
                         // Check plan part
                         if (isMap2) {
-                            const planPart = String(props['Plan part'] || '').toLowerCase();
+                            const planPart = String(props['Plan part en'] || '').toLowerCase();
                             if (planPart.includes(searchTerm)) matchesSearch = true;
                         }
 
@@ -1456,7 +1451,7 @@
                     // Filter by plan part (multiselect)
                     if (selectedPlanParts.size > 0) {
                         if (!isMap2) return false; // Plan part only exists in map2
-                        const planPart = String(props['Plan part'] || '');
+                        const planPart = String(props['Plan part en'] || '');
                         if (!selectedPlanParts.has(planPart)) return false;
                     }
 
@@ -1548,7 +1543,7 @@
                     <div class="legend-title">Legend</div>
                     <div class="legend-item">
                         <span class="legend-color" style="background:#90EE90; border-color:#2d5f2d;"></span>
-                        Land plots (Map 1)
+                        Land plots
                     </div>
                     <div class="legend-item">
                         <span class="legend-color" style="background:#FFB6C1; border-color:#C71585;"></span>
@@ -1557,14 +1552,6 @@
                     <div class="legend-item">
                         <span class="legend-color" style="background:#FFD700; border-color:#DAA520;"></span>
                         Buildings
-                    </div>
-                    <div class="legend-item">
-                        <span class="legend-color" style="background:#808080;"></span>
-                        Street boundaries
-                    </div>
-                    <div class="legend-item">
-                        <span class="legend-color" style="background:#90EE90; border-color:#2d5f2d;"></span>
-                        Land plots (Map 2)
                     </div>
                 `;
                 return div;
