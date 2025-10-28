@@ -584,6 +584,53 @@
             }).addTo(map);
 
             // ========================================
+            // POPUP CONTENT GENERATION
+            // ========================================
+
+            // Create popup content for land plots
+            function createPopupContent(props, sourceLayer) {
+                let popupContent = '';
+                let hasData = false;
+
+                // Determine field names based on source layer
+                const isMap2 = sourceLayer === 'map2-polygons1';
+                const lengthField = isMap2 ? 'Length of plot' : 'Length of plots';
+                const widthField = isMap2 ? 'Width of plot' : 'Width of plots';
+
+                // Field Number
+                if (props['Field number']) {
+                    popupContent += `<div class="popup-info"><b>Field Number:</b> ${props['Field number']}</div>`;
+                    hasData = true;
+                }
+
+                // Owner Name (translit) - first
+                if (props['Name translit']) {
+                    popupContent += `<div class="popup-info"><b>Owner Name (translit):</b> ${props['Name translit']}</div>`;
+                    hasData = true;
+                }
+
+                // Owner Name (native) - second
+                if (props['Name native']) {
+                    popupContent += `<div class="popup-info"><b>Owner Name (native):</b> ${props['Name native']}</div>`;
+                    hasData = true;
+                }
+
+                // Length
+                if (props[lengthField]) {
+                    popupContent += `<div class="popup-info"><b>Length:</b> ${props[lengthField]} sazhens</div>`;
+                    hasData = true;
+                }
+
+                // Width
+                if (props[widthField]) {
+                    popupContent += `<div class="popup-info"><b>Width:</b> ${props[widthField]} sazhens</div>`;
+                    hasData = true;
+                }
+
+                return hasData ? popupContent : null;
+            }
+
+            // ========================================
             // LAYER STYLING FUNCTIONS
             // ========================================
 
@@ -720,28 +767,11 @@
 
                         // Configure popups and interactions for land plots
                         if (sourceLayer === 'polygons1') {
-                            let popupContent = '';
-                            let hasData = false;
-
-                            if (props['Field number']) {
-                                popupContent += `<div class="popup-info"><b>Field Number:</b> ${props['Field number']}</div>`;
-                                hasData = true;
-                            }
-                            if (props['Name native']) {
-                                popupContent += `<div class="popup-info"><b>Owner Name (translit):</b> ${props['Name native']}</div>`;
-                                hasData = true;
-                            }
-                            if (props['Length of plots']) {
-                                popupContent += `<div class="popup-info"><b>Length:</b> ${props['Length of plots']} sazhens</div>`;
-                                hasData = true;
-                            }
-                            if (props['Width of plots']) {
-                                popupContent += `<div class="popup-info"><b>Width:</b> ${props['Width of plots']} sazhens</div>`;
-                                hasData = true;
-                            }
+                            // Create popup content using shared function
+                            const popupContent = createPopupContent(props, sourceLayer);
 
                             // Bind popup only if there is data
-                            if (hasData) {
+                            if (popupContent) {
                                 layer.bindPopup(popupContent);
 
                                 // Add event listener for when popup opens
@@ -847,32 +877,11 @@
 
                         // Configure popups and interactions for map2 land plots
                         if (sourceLayer === 'map2-polygons1') {
-                            let popupContent = '';
-                            let hasData = false;
-
-                            if (props['Field number']) {
-                                popupContent += `<div class="popup-info"><b>Field Number:</b> ${props['Field number']}</div>`;
-                                hasData = true;
-                            }
-                            if (props['Name translit']) {
-                                popupContent += `<div class="popup-info"><b>Owner Name (translit):</b> ${props['Name translit']}</div>`;
-                                hasData = true;
-                            }
-                            if (props['Name native']) {
-                                popupContent += `<div class="popup-info"><b>Owner Name (native):</b> ${props['Name native']}</div>`;
-                                hasData = true;
-                            }
-                            if (props['Length of plot']) {
-                                popupContent += `<div class="popup-info"><b>Length:</b> ${props['Length of plot']} sazhens</div>`;
-                                hasData = true;
-                            }
-                            if (props['Width of plot']) {
-                                popupContent += `<div class="popup-info"><b>Width:</b> ${props['Width of plot']} sazhens</div>`;
-                                hasData = true;
-                            }
+                            // Create popup content using shared function
+                            const popupContent = createPopupContent(props, sourceLayer);
 
                             // Bind popup only if there is data
-                            if (hasData) {
+                            if (popupContent) {
                                 layer.bindPopup(popupContent);
 
                                 // Add event listener for when popup opens
@@ -1174,7 +1183,7 @@
             // ========================================
 
             let allTableData = [];
-            let currentSortColumn = 'number'; // Default sort by plot number
+            let currentSortColumn = null; // No column sorted by default (initial sort is by plan and owner)
             let currentSortDirection = 'asc'; // ascending
 
             // Save data for search and sort
@@ -1204,8 +1213,8 @@
                 // Populate Plan part filter options
                 populatePlanPartFilter();
 
-                // Apply default sorting by number
-                sortTableData('number', 'asc');
+                // Apply default sorting by plan and owner name
+                initialSortTableData();
             }
 
             // Track selected plan parts
@@ -1339,8 +1348,57 @@
                             return 0;
                     }
 
+                    // Check if values are empty (null, undefined, empty string, or just '-')
+                    const isEmptyA = !valueA || valueA === '' || valueA === '-' || (typeof valueA === 'number' && valueA === 0);
+                    const isEmptyB = !valueB || valueB === '' || valueB === '-' || (typeof valueB === 'number' && valueB === 0);
+
+                    // Empty values always go last
+                    if (isEmptyA && !isEmptyB) return 1;
+                    if (!isEmptyA && isEmptyB) return -1;
+                    if (isEmptyA && isEmptyB) return 0;
+
                     if (valueA < valueB) return direction === 'asc' ? -1 : 1;
                     if (valueA > valueB) return direction === 'asc' ? 1 : -1;
+                    return 0;
+                });
+            }
+
+            // Initial sort by plan and then by owner name
+            function initialSortTableData() {
+                allTableData.sort((a, b) => {
+                    const propsA = a.properties;
+                    const propsB = b.properties;
+                    const isMap2A = propsA.source_layer === 'map2-polygons1';
+                    const isMap2B = propsB.source_layer === 'map2-polygons1';
+
+                    // First, sort by plan (1888 before 1891)
+                    if (!isMap2A && isMap2B) return -1; // plan 1888 before plan 1891
+                    if (isMap2A && !isMap2B) return 1;  // plan 1891 after plan 1888
+
+                    // Within each plan, sort by owner name (translit)
+                    let ownerA, ownerB;
+                    if (isMap2A) {
+                        ownerA = (propsA['Name translit'] || propsA['Name native'] || '').toLowerCase();
+                    } else {
+                        ownerA = (propsA['Name native'] || '').toLowerCase();
+                    }
+                    if (isMap2B) {
+                        ownerB = (propsB['Name translit'] || propsB['Name native'] || '').toLowerCase();
+                    } else {
+                        ownerB = (propsB['Name native'] || '').toLowerCase();
+                    }
+
+                    // Check if owner names are empty
+                    const isEmptyA = !ownerA || ownerA === '' || ownerA === '-';
+                    const isEmptyB = !ownerB || ownerB === '' || ownerB === '-';
+
+                    // Empty owner names always go last within their plan
+                    if (isEmptyA && !isEmptyB) return 1;
+                    if (!isEmptyA && isEmptyB) return -1;
+                    if (isEmptyA && isEmptyB) return 0;
+
+                    if (ownerA < ownerB) return -1;
+                    if (ownerA > ownerB) return 1;
                     return 0;
                 });
             }
