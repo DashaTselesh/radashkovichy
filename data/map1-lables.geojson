@@ -1,0 +1,12 @@
+{
+"type": "FeatureCollection",
+"name": "labels-1888",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "fid": 1, "Label": "Catholic church square", "Label native": "Костельная площадь" }, "geometry": { "type": "Point", "coordinates": [ 27.24203155697851, 54.155033325768692 ] } },
+{ "type": "Feature", "properties": { "fid": 2, "Label": "Chirevsky lane", "Label native": "Чиревский переулок" }, "geometry": { "type": "Point", "coordinates": [ 27.244022775818756, 54.15505510706943 ] } },
+{ "type": "Feature", "properties": { "fid": 3, "Label": "Minsk street", "Label native": "Минская улица" }, "geometry": { "type": "Point", "coordinates": [ 27.242373157432517, 54.156069147861828 ] } },
+{ "type": "Feature", "properties": { "fid": 4, "Label": "Minsk street", "Label native": "Минская улица" }, "geometry": { "type": "Point", "coordinates": [ 27.244089410980575, 54.154415697817029 ] } },
+{ "type": "Feature", "properties": { "fid": 5, "Label": "Zaslavl lane", "Label native": "Заславский переулок" }, "geometry": { "type": "Point", "coordinates": [ 27.241858921724415, 54.154261784186048 ] } }
+]
+}

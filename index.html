@@ -439,20 +439,25 @@
 
         /* Street Name Labels */
         .leaflet-text-path {
-            font-size: 12px;
-            font-weight: bold;
-            fill: #333;
-            paint-order: stroke;
-            stroke: white;
-            stroke-width: 3px;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-            transition: opacity 0.3s;
+            pointer-events: none;
         }
 
-        .leaflet-text-path-hidden {
+        .leaflet-text-path span {
+            font-size: 16px;
+            font-weight: bold;
+            transition: opacity 0.3s;
+            white-space: nowrap;
+            color: #333;
+            background-color: rgba(255, 255, 255, 0.75);
+            padding: 1px 4px;
+            border-radius: 2px;
+            display: inline-block;
+            position: absolute;
+            transform: translate(-50%, -100%);
+        }
+
+        .leaflet-text-path-hidden span {
             opacity: 0 !important;
-            pointer-events: none !important;
         }
 
         /* Popup Content */
@@ -777,6 +782,18 @@
                                 <option value="map2">Restoration plan 1891</option>
                             </select>
                         </div>
+                        <div class="filter-group">
+                            <label class="filter-label">Ethnic and religious affiliation:</label>
+                            <select id="filter-religion" class="filter-select" style="padding: 6px 8px;">
+                                <option value="">All</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label class="filter-label">Sex:</label>
+                            <select id="filter-sex" class="filter-select" style="padding: 6px 8px;">
+                                <option value="">All</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -786,16 +803,19 @@
                     <thead>
                         <tr>
                             <th data-sort="number">No.</th>
-                            <th data-sort="firstnametranslit">First name (translit)</th>
-                            <th data-sort="lastnametranslit">Last name (translit)</th>
-                            <th data-sort="patronymictranslit">Patronymic (translit)</th>
-                            <th data-sort="firstnamenative">First name (native)</th>
-                            <th data-sort="lastnamenative">Last name (native)</th>
-                            <th data-sort="patronymicnative">Patronymic (native)</th>
+                            <th data-sort="firstnametranslit">First name<br>translit</th>
+                            <th data-sort="lastnametranslit">Last name<br>translit</th>
+                            <th data-sort="patronymictranslit">Patronymic<br>translit</th>
+                            <th data-sort="firstnamenative">First name<br>native</th>
+                            <th data-sort="lastnamenative">Last name<br>native</th>
+                            <th data-sort="patronymicnative">Patronymic<br>native</th>
+                            <th data-sort="religion">Ethnic and religious<br>affiliation</th>
+                            <th data-sort="sex">Sex</th>
                             <th data-sort="length">Length</th>
                             <th data-sort="width">Width</th>
                             <th data-sort="planpart">Plan part</th>
-                            <th data-sort="owneroriginal">Owner Name (original)</th>
+                            <th data-sort="owneroriginal">Owner name<br>original</th>
+                            <th data-sort="note">Note</th>
                         </tr>
                     </thead>
                     <tbody id="data-table-body">
@@ -885,25 +905,27 @@
 
                 // Owner Name (translit) - first
                 if (props['Name translit']) {
-                    popupContent += `<div class="popup-info"><b>Owner Name (translit):</b> ${props['Name translit']}</div>`;
+                    popupContent += `<div class="popup-info"><b>Name:</b> ${props['Name translit']}</div>`;
                     hasData = true;
                 }
 
                 // Owner Name (native) - second
                 if (props['Name native']) {
-                    popupContent += `<div class="popup-info"><b>Owner Name (native):</b> ${props['Name native']}</div>`;
+                    popupContent += `<div class="popup-info"><b>Name original:</b> ${props['Name native']}</div>`;
                     hasData = true;
                 }
 
                 // Length
-                if (props[lengthField]) {
-                    popupContent += `<div class="popup-info"><b>Length:</b> ${props[lengthField]} sazhens</div>`;
+                const lengthValue = props[lengthField];
+                if (lengthValue && lengthValue !== null && lengthValue !== '' && String(lengthValue).trim() !== '') {
+                    popupContent += `<div class="popup-info"><b>Length:</b> ${lengthValue} sazhens</div>`;
                     hasData = true;
                 }
 
                 // Width
-                if (props[widthField]) {
-                    popupContent += `<div class="popup-info"><b>Width:</b> ${props[widthField]} sazhens</div>`;
+                const widthValue = props[widthField];
+                if (widthValue && widthValue !== null && widthValue !== '' && String(widthValue).trim() !== '') {
+                    popupContent += `<div class="popup-info"><b>Width:</b> ${widthValue} sazhens</div>`;
                     hasData = true;
                 }
 
@@ -918,16 +940,6 @@
             function getFeatureStyle(feature) {
                 const sourceLayer = feature.properties.source_layer;
                 const props = feature.properties;
-
-                // Street boundaries (lines)
-                if (sourceLayer === 'lines') {
-                    return {
-                        color: props.stroke_color || '#808080',
-                        weight: props.stroke_width || 2,
-                        opacity: 1,
-                        dashArray: props.dash_array || ''
-                    };
-                }
 
                 // Land plots (polygons1)
                 if (sourceLayer === 'polygons1') {
@@ -991,7 +1003,8 @@
             let map2Layer; // Map 2 GeoJSON layer
             let fieldLabelsGroup = L.layerGroup(); // Group for plot number markers for map1
             let map2LabelsGroup = L.layerGroup(); // Group for plot number markers for map2
-            let streetLayers = []; // Array to store street lines with names
+            let streetLabelsGroup = L.layerGroup(); // Group for street/square name labels for map1
+            let map2StreetLabelsGroup = L.layerGroup(); // Group for street/square name labels for map2
 
             // ========================================
             // DATA LOADING
@@ -1002,9 +1015,11 @@
                 fetch('data/map1-polygons.geojson').then(r => r.json()),
                 fetch('data/map1-buildings.geojson').then(r => r.json()),
                 fetch('data/map1-buildings2.geojson').then(r => r.json()),
-                fetch('data/map2-polygons.geojson').then(r => r.json())
+                fetch('data/map1-lables.geojson').then(r => r.json()),
+                fetch('data/map2_polygons.geojson').then(r => r.json()),
+                fetch('data/map2_labels.geojson').then(r => r.json())
             ])
-            .then(([polygons1Data, polygons3Data, polygons2Data, map2PolygonsData]) => {
+            .then(([polygons1Data, polygons3Data, polygons2Data, labelsData, map2PolygonsData, map2LabelsData]) => {
                 console.log('✓ All files loaded');
 
                 // Tag each feature with its source layer for proper styling
@@ -1128,29 +1143,41 @@
                                 });
                             });
                         }
-
-                        // Street names along lines
-                        if (sourceLayer === 'lines' && props['Street name'] && props['Street name'] !== null && props['Street name'] !== '') {
-                            // Store street name for later use
-                            layer._streetName = props['Street name'];
-
-                            layer.setText(props['Street name'], {
-                                repeat: false,
-                                center: true,
-                                offset: -8,
-                                attributes: {
-                                    'class': 'leaflet-text-path',
-                                    'dy': '-3'
-                                }
-                            });
-
-                            // Store for visibility management
-                            streetLayers.push(layer);
-                        }
                     }
                 }).addTo(map);
 
                 console.log('✓ Combined layer created and added to map');
+
+                // ========================================
+                // CREATE STREET/SQUARE LABELS FOR MAP 1
+                // ========================================
+
+                labelsData.features.forEach(feature => {
+                    const props = feature.properties;
+                    const coords = feature.geometry.coordinates;
+
+                    // Use Label field for display
+                    const labelText = props['Label'];
+
+                    if (labelText) {
+                        // Check current zoom to set initial visibility
+                        const currentZoom = map.getZoom();
+                        const initialClass = currentZoom >= minZoomForLabels ? 'leaflet-text-path' : 'leaflet-text-path leaflet-text-path-hidden';
+
+                        const marker = L.marker([coords[1], coords[0]], {
+                            icon: L.divIcon({
+                                className: initialClass,
+                                html: `<span style="display: inline-block;">${labelText}</span>`,
+                                iconSize: [1, 1]
+                            }),
+                            interactive: false
+                        });
+
+                        streetLabelsGroup.addLayer(marker);
+                    }
+                });
+
+                console.log('✓ Street labels created');
 
                 // ========================================
                 // CREATE MAP 2 LAYER
@@ -1230,9 +1257,40 @@
 
                 console.log('✓ Map 2 layer created');
 
-                // Create group combining historical map and plot numbers
-                const historicalMapGroup = L.layerGroup([combinedLayer, fieldLabelsGroup]).addTo(map);
-                const map2Group = L.layerGroup([map2Layer, map2LabelsGroup]).addTo(map);
+                // ========================================
+                // CREATE STREET/SQUARE LABELS FOR MAP 2
+                // ========================================
+
+                map2LabelsData.features.forEach(feature => {
+                    const props = feature.properties;
+                    const coords = feature.geometry.coordinates;
+
+                    // Use Label field for display
+                    const labelText = props['Label'];
+
+                    if (labelText) {
+                        // Check current zoom to set initial visibility
+                        const currentZoom = map.getZoom();
+                        const initialClass = currentZoom >= minZoomForLabels ? 'leaflet-text-path' : 'leaflet-text-path leaflet-text-path-hidden';
+
+                        const marker = L.marker([coords[1], coords[0]], {
+                            icon: L.divIcon({
+                                className: initialClass,
+                                html: `<span style="display: inline-block;">${labelText}</span>`,
+                                iconSize: [1, 1]
+                            }),
+                            interactive: false
+                        });
+
+                        map2StreetLabelsGroup.addLayer(marker);
+                    }
+                });
+
+                console.log('✓ Map 2 street labels created');
+
+                // Create group combining historical map, plot numbers, and street labels
+                const historicalMapGroup = L.layerGroup([combinedLayer, fieldLabelsGroup, streetLabelsGroup]).addTo(map);
+                const map2Group = L.layerGroup([map2Layer, map2LabelsGroup, map2StreetLabelsGroup]).addTo(map);
 
                 // Add layer control (both as checkboxes)
                 const overlayMaps = {
@@ -1322,7 +1380,7 @@
                 // LABEL VISIBILITY MANAGEMENT
                 // ========================================
 
-                // Update visibility of plot numbers and street names based on zoom level
+                // Update visibility of plot numbers and street labels based on zoom level
                 function updateLabelsVisibility() {
                     const zoom = map.getZoom();
 
@@ -1350,13 +1408,27 @@
                         }
                     });
 
-                    // Toggle street name visibility via CSS class
-                    const allTextElements = document.querySelectorAll('text.leaflet-text-path');
-                    allTextElements.forEach(el => {
-                        if (zoom >= minZoomForLabels) {
-                            el.classList.remove('leaflet-text-path-hidden');
-                        } else {
-                            el.classList.add('leaflet-text-path-hidden');
+                    // Toggle street label visibility for map1
+                    streetLabelsGroup.eachLayer(marker => {
+                        const element = marker.getElement();
+                        if (element) {
+                            if (zoom >= minZoomForLabels) {
+                                element.classList.remove('leaflet-text-path-hidden');
+                            } else {
+                                element.classList.add('leaflet-text-path-hidden');
+                            }
+                        }
+                    });
+
+                    // Toggle street label visibility for map2
+                    map2StreetLabelsGroup.eachLayer(marker => {
+                        const element = marker.getElement();
+                        if (element) {
+                            if (zoom >= minZoomForLabels) {
+                                element.classList.remove('leaflet-text-path-hidden');
+                            } else {
+                                element.classList.add('leaflet-text-path-hidden');
+                            }
                         }
                     });
                 }
@@ -1365,7 +1437,6 @@
                 updateLabelsVisibility();
 
                 // Update on zoom and move events
-                // moveend is needed because leaflet-textpath plugin redraws text on map pan
                 map.on('zoomend moveend', updateLabelsVisibility);
 
                 // Update label visibility when layers are added/removed via layer control
@@ -1395,6 +1466,28 @@
                                     element.classList.add('field-label-hidden');
                                 } else {
                                     element.classList.remove('field-label-hidden');
+                                }
+                            }
+                        });
+
+                        streetLabelsGroup.eachLayer(marker => {
+                            const element = marker.getElement();
+                            if (element) {
+                                if (shouldHideLabels) {
+                                    element.classList.add('leaflet-text-path-hidden');
+                                } else {
+                                    element.classList.remove('leaflet-text-path-hidden');
+                                }
+                            }
+                        });
+
+                        map2StreetLabelsGroup.eachLayer(marker => {
+                            const element = marker.getElement();
+                            if (element) {
+                                if (shouldHideLabels) {
+                                    element.classList.add('leaflet-text-path-hidden');
+                                } else {
+                                    element.classList.remove('leaflet-text-path-hidden');
                                 }
                             }
                         });
@@ -1433,31 +1526,37 @@
                     row.dataset.fid = props.fid; // Unique feature ID for lookup
                     row.dataset.sourceLayer = props.source_layer; // Store source layer for lookup
 
-                    // Extract data based on source
-                    const displayNumber = props['Field number'] || '-';
-                    const firstNameTranslit = props['First name translit'] || '-';
-                    const lastNameTranslit = props['Last name translit'] || '-';
-                    const patronymicTranslit = props['Patronymic translit'] || '-';
-                    const firstNameNative = props['First name native'] || '-';
-                    const lastNameNative = props['Last name native'] || '-';
-                    const patronymicNative = props['Patronymic native'] || '-';
-                    const length = isMap2 ? (props['Length of plot'] || '-') : (props['Length of plots'] || '-');
-                    const width = isMap2 ? (props['Width of plot'] || '-') : (props['Width of plots'] || '-');
-                    const planPart = isMap2 ? (props['Plan part en'] || '-') : '-';
-                    const ownerOriginal = props['Name native'] || '-';
+                    // Extract data based on source (store raw values, not '-')
+                    const displayNumber = props['Field number'];
+                    const firstNameTranslit = props['First name translit'];
+                    const lastNameTranslit = props['Last name translit'];
+                    const patronymicTranslit = props['Patronymic translit'];
+                    const firstNameNative = props['First name native'];
+                    const lastNameNative = props['Last name native'];
+                    const patronymicNative = props['Patronymic native'];
+                    const religion = props['Religion'];
+                    const sex = props['Sex'];
+                    const length = isMap2 ? props['Length of plot'] : props['Length of plots'];
+                    const width = isMap2 ? props['Width of plot'] : props['Width of plots'];
+                    const planPart = isMap2 ? props['Plan part'] : null;
+                    const ownerOriginal = props['Name native'];
+                    const note = props['Note'];
 
                     row.innerHTML = `
-                        <td>${displayNumber}</td>
-                        <td>${firstNameTranslit}</td>
-                        <td>${lastNameTranslit}</td>
-                        <td>${patronymicTranslit}</td>
-                        <td>${firstNameNative}</td>
-                        <td>${lastNameNative}</td>
-                        <td>${patronymicNative}</td>
-                        <td>${length}</td>
-                        <td>${width}</td>
-                        <td>${planPart}</td>
-                        <td>${ownerOriginal}</td>
+                        <td>${displayNumber || '-'}</td>
+                        <td>${firstNameTranslit || '-'}</td>
+                        <td>${lastNameTranslit || '-'}</td>
+                        <td>${patronymicTranslit || '-'}</td>
+                        <td>${firstNameNative || '-'}</td>
+                        <td>${lastNameNative || '-'}</td>
+                        <td>${patronymicNative || '-'}</td>
+                        <td>${religion || '-'}</td>
+                        <td>${sex || '-'}</td>
+                        <td>${length || '-'}</td>
+                        <td>${width || '-'}</td>
+                        <td>${planPart || '-'}</td>
+                        <td>${ownerOriginal || '-'}</td>
+                        <td>${note || '-'}</td>
                     `;
 
                     // Click row to open popup on map
@@ -1571,8 +1670,10 @@
                 // Combine both datasets
                 allTableData = [...map1Data, ...map2Data];
 
-                // Populate Plan part filter options
+                // Populate filter options
                 populatePlanPartFilter();
+                populateReligionFilter();
+                populateSexFilter();
 
                 // Apply default sorting by plan and owner name
                 initialSortTableData();
@@ -1590,8 +1691,8 @@
                     const props = feature.properties;
                     const isMap2 = props.source_layer === 'map2-polygons1';
 
-                    if (isMap2 && props['Plan part en']) {
-                        uniquePlanParts.add(props['Plan part en']);
+                    if (isMap2 && props['Plan part']) {
+                        uniquePlanParts.add(props['Plan part']);
                     }
                 });
 
@@ -1663,6 +1764,54 @@
                 }
             });
 
+            // Populate Religion filter with unique values
+            function populateReligionFilter() {
+                const uniqueReligions = new Set();
+
+                // Collect unique Religion values
+                allTableData.forEach(feature => {
+                    const props = feature.properties;
+                    if (props['Religion']) {
+                        uniqueReligions.add(props['Religion']);
+                    }
+                });
+
+                // Get the select element
+                const religionSelect = document.getElementById('filter-religion');
+
+                // Add options for each unique religion
+                Array.from(uniqueReligions).sort().forEach(religion => {
+                    const option = document.createElement('option');
+                    option.value = religion;
+                    option.textContent = religion;
+                    religionSelect.appendChild(option);
+                });
+            }
+
+            // Populate Sex filter with unique values
+            function populateSexFilter() {
+                const uniqueSexes = new Set();
+
+                // Collect unique Sex values
+                allTableData.forEach(feature => {
+                    const props = feature.properties;
+                    if (props['Sex']) {
+                        uniqueSexes.add(props['Sex']);
+                    }
+                });
+
+                // Get the select element
+                const sexSelect = document.getElementById('filter-sex');
+
+                // Add options for each unique sex
+                Array.from(uniqueSexes).sort().forEach(sex => {
+                    const option = document.createElement('option');
+                    option.value = sex;
+                    option.textContent = sex;
+                    sexSelect.appendChild(option);
+                });
+            }
+
             // Sort table data
             function sortTableData(column, direction) {
                 allTableData.sort((a, b) => {
@@ -1710,12 +1859,24 @@
                             valueB = parseFloat(isMap2B ? propsB['Width of plot'] : propsB['Width of plots']) || 0;
                             break;
                         case 'planpart':
-                            valueA = isMap2A ? (propsA['Plan part en'] || '').toLowerCase() : '';
-                            valueB = isMap2B ? (propsB['Plan part en'] || '').toLowerCase() : '';
+                            valueA = isMap2A ? (propsA['Plan part'] || '').toLowerCase() : '';
+                            valueB = isMap2B ? (propsB['Plan part'] || '').toLowerCase() : '';
                             break;
                         case 'owneroriginal':
                             valueA = (propsA['Name native'] || '').toLowerCase();
                             valueB = (propsB['Name native'] || '').toLowerCase();
+                            break;
+                        case 'religion':
+                            valueA = (propsA['Religion'] || '').toLowerCase();
+                            valueB = (propsB['Religion'] || '').toLowerCase();
+                            break;
+                        case 'sex':
+                            valueA = (propsA['Sex'] || '').toLowerCase();
+                            valueB = (propsB['Sex'] || '').toLowerCase();
+                            break;
+                        case 'note':
+                            valueA = (propsA['Note'] || '').toLowerCase();
+                            valueB = (propsB['Note'] || '').toLowerCase();
                             break;
                         default:
                             return 0;
@@ -1804,10 +1965,14 @@
                 const searchTerm = document.getElementById('search-input').value.trim();
                 const ownerFilter = document.getElementById('filter-owner').value.trim();
                 const mapFilter = document.getElementById('filter-map').value;
+                const religionFilter = document.getElementById('filter-religion').value;
+                const sexFilter = document.getElementById('filter-sex').value;
 
                 if (searchTerm !== '') activeCount++;
                 if (ownerFilter !== '') activeCount++;
                 if (mapFilter !== '') activeCount++;
+                if (religionFilter !== '') activeCount++;
+                if (sexFilter !== '') activeCount++;
                 if (selectedPlanParts.size > 0) activeCount++;
 
                 const badge = document.getElementById('filters-active-badge');
@@ -1819,12 +1984,14 @@
                 }
             }
 
-            // Apply all filters (search + owner + plan part + map)
+            // Apply all filters (search + owner + plan part + map + religion + sex)
             function applyFilters() {
                 // Get all filter values
                 const searchTerm = document.getElementById('search-input').value.toLowerCase().trim();
                 const ownerFilter = document.getElementById('filter-owner').value.toLowerCase().trim();
                 const mapFilter = document.getElementById('filter-map').value;
+                const religionFilter = document.getElementById('filter-religion').value;
+                const sexFilter = document.getElementById('filter-sex').value;
 
                 // Update clear button visibility
                 updateClearButtonVisibility();
@@ -1841,6 +2008,18 @@
                     if (mapFilter !== '') {
                         if (mapFilter === 'map1' && isMap2) return false;
                         if (mapFilter === 'map2' && !isMap2) return false;
+                    }
+
+                    // Filter by religion
+                    if (religionFilter !== '') {
+                        const religion = props['Religion'] || '';
+                        if (religion !== religionFilter) return false;
+                    }
+
+                    // Filter by sex
+                    if (sexFilter !== '') {
+                        const sex = props['Sex'] || '';
+                        if (sex !== sexFilter) return false;
                     }
 
                     // Filter by search term (plot number or any name field)
@@ -1881,9 +2060,21 @@
 
                         // Check plan part
                         if (isMap2) {
-                            const planPart = String(props['Plan part en'] || '').toLowerCase();
+                            const planPart = String(props['Plan part'] || '').toLowerCase();
                             if (planPart.includes(searchTerm)) matchesSearch = true;
                         }
+
+                        // Check Religion
+                        const religion = String(props['Religion'] || '').toLowerCase();
+                        if (religion.includes(searchTerm)) matchesSearch = true;
+
+                        // Check Sex
+                        const sex = String(props['Sex'] || '').toLowerCase();
+                        if (sex.includes(searchTerm)) matchesSearch = true;
+
+                        // Check Note
+                        const note = String(props['Note'] || '').toLowerCase();
+                        if (note.includes(searchTerm)) matchesSearch = true;
 
                         if (!matchesSearch) return false;
                     }
@@ -1920,7 +2111,7 @@
                     // Filter by plan part (multiselect)
                     if (selectedPlanParts.size > 0) {
                         if (!isMap2) return false; // Plan part only exists in map2
-                        const planPart = String(props['Plan part en'] || '');
+                        const planPart = String(props['Plan part'] || '');
                         if (!selectedPlanParts.has(planPart)) return false;
                     }
 
@@ -1955,6 +2146,16 @@
 
             // Map filter handler
             document.getElementById('filter-map').addEventListener('change', function(e) {
+                applyFilters();
+            });
+
+            // Religion filter handler
+            document.getElementById('filter-religion').addEventListener('change', function(e) {
+                applyFilters();
+            });
+
+            // Sex filter handler
+            document.getElementById('filter-sex').addEventListener('change', function(e) {
                 applyFilters();
             });
 
