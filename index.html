@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,6 +8,10 @@
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"
           integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossorigin=""/>
+
+    <!-- Leaflet Gesture Handling CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-gesture-handling@1.2.2/dist/leaflet-gesture-handling.min.css"
           crossorigin=""/>
 
     <style>
@@ -23,52 +27,156 @@
             margin: 0;
             padding: 0;
             font-family: Arial, sans-serif;
-            overflow: hidden;
+            overflow-y: auto;
+            overflow-x: hidden;
+            background-color: #f5f5f5;
         }
 
         /* ========================================
            LAYOUT
            ======================================== */
 
+        #page-header {
+            background: white;
+            padding: 30px 40px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        #page-title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #2c5f2d;
+            margin: 0 0 20px 0;
+            line-height: 1.4;
+        }
+
+        #page-description {
+            font-size: 16px;
+            color: #666;
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            min-height: 60px;
+        }
+
         #container {
-            display: flex;
-            width: 100%;
-            height: 100vh;
+            max-width: 1600px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        #map-section {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
         }
 
         #map {
-            flex: 1;
-            min-width: 50%;
-            height: 100vh;
+            width: 100%;
+            height: 600px;
             background-color: #f0f0f0;
         }
 
         /* ========================================
-           SIDEBAR
+           TABLE SECTION
            ======================================== */
 
-        #sidebar {
-            width: 500px;
-            height: 100vh;
-            background: #f5f5f5;
-            border-left: 2px solid #ccc;
-            display: flex;
-            flex-direction: column;
+        #table-section {
+            background: white;
+            border-radius: 12px;
             overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
         }
 
-        #sidebar-header {
+        #table-header {
             background: #2c5f2d;
             color: white;
-            padding: 15px 20px;
+            padding: 0;
+        }
+
+        #table-header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 30px;
+        }
+
+        #table-title {
             font-size: 18px;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        #filters-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            user-select: none;
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+
+        #filters-toggle:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        #filters-toggle-text {
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: white;
+        }
+
+        #filters-active-badge {
+            display: none;
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
             font-weight: bold;
         }
 
-        #sidebar-controls {
-            padding: 10px 20px;
+        #filters-active-badge.show {
+            display: inline-block;
+        }
+
+        #filters-toggle-icon {
+            font-size: 14px;
+            color: white;
+            transition: transform 0.3s;
+        }
+
+        #filters-toggle-icon.collapsed {
+            transform: rotate(-90deg);
+        }
+
+        #filters-content {
+            padding: 20px 30px;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out, opacity 0.3s ease-out, padding 0.3s ease-out;
+            max-height: 500px;
+            opacity: 1;
             background: white;
-            border-bottom: 1px solid #ccc;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        #filters-content.collapsed {
+            max-height: 0;
+            opacity: 0;
+            padding-top: 0;
+            padding-bottom: 0;
         }
 
         #search-wrapper {
@@ -214,9 +322,11 @@
         }
 
         #table-container {
-            flex: 1;
-            overflow-y: auto;
             background: white;
+            max-height: 600px;
+            overflow-y: auto;
+            overflow-x: auto;
+            scroll-behavior: smooth;
         }
 
         /* ========================================
@@ -246,6 +356,7 @@
             cursor: pointer;
             user-select: none;
             position: relative;
+            white-space: nowrap;
         }
 
         #data-table th:hover {
@@ -287,8 +398,12 @@
         }
 
         #data-table tbody tr.selected {
-            background-color: #d4edda;
-            font-weight: bold;
+            background-color: #c8e6c9 !important;
+            border-left: 4px solid #2c5f2d;
+        }
+
+        #data-table tbody tr.selected:hover {
+            background-color: #b8d6b8 !important;
         }
 
         #data-table tbody tr:nth-child(even) {
@@ -446,32 +561,153 @@
         }
 
         /* ========================================
+           FOOTER
+           ======================================== */
+
+        footer {
+            background: #2c5f2d;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-size: 13px;
+            width: 100%;
+            box-shadow: 0 -2px 5px rgba(0,0,0,0.2);
+            margin-top: 30px;
+        }
+
+        footer a {
+            color: #90EE90;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .footer-section {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        /* ========================================
            RESPONSIVE DESIGN
            ======================================== */
 
         /* Tablets */
         @media (max-width: 1024px) {
-            #sidebar {
-                width: 400px;
+            #page-header {
+                padding: 25px 30px;
+            }
+
+            #page-title {
+                font-size: 24px;
+            }
+
+            #page-description {
+                font-size: 15px;
+            }
+
+            #container {
+                padding: 0 15px;
+                margin: 20px auto;
+            }
+
+            #map {
+                height: 500px;
+            }
+
+            #table-header-top {
+                padding: 10px 20px;
+            }
+
+            #table-title {
+                font-size: 17px;
+            }
+
+            #filters-content {
+                padding: 18px 20px;
             }
         }
 
         /* Mobile */
         @media (max-width: 768px) {
+            #page-header {
+                padding: 20px 15px;
+            }
+
+            #page-title {
+                font-size: 20px;
+            }
+
+            #page-description {
+                font-size: 14px;
+                padding: 12px;
+            }
+
             #container {
-                flex-direction: column;
+                padding: 0 10px;
+                margin: 15px auto;
             }
 
             #map {
-                height: 50vh;
-                min-width: 100%;
+                height: 400px;
             }
 
-            #sidebar {
+            #table-header-top {
+                padding: 10px 20px;
+            }
+
+            #table-title {
+                font-size: 16px;
+            }
+
+            #filters-toggle {
+                padding: 5px 10px;
+            }
+
+            #filters-toggle-text {
+                font-size: 12px;
+            }
+
+            #filters-content {
+                padding: 15px 20px;
+            }
+
+            #table-container {
+                max-height: 400px;
+            }
+
+            footer {
+                padding: 15px 10px;
+                font-size: 11px;
+            }
+
+            .footer-content {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .footer-section {
+                min-width: 100%;
+                text-align: center;
+            }
+
+            .filters-row {
+                flex-direction: column;
+            }
+
+            .filter-group {
                 width: 100%;
-                height: 50vh;
-                border-left: none;
-                border-top: 2px solid #ccc;
             }
         }
     </style>
@@ -479,50 +715,68 @@
 <body>
     <div id="loading">Map loading...</div>
 
+    <header id="page-header">
+        <h1 id="page-title">Plans for the restoration of Radoshkovichi after the fires of 1888 and 1891 (indicating land plots and owners)</h1>
+        <div id="page-description">
+            <!-- Description text will be added here -->
+        </div>
+    </header>
+
     <div id="container">
-        <div id="map"></div>
+        <div id="map-section">
+            <div id="map"></div>
+        </div>
 
-        <div id="sidebar">
-            <div id="sidebar-header">
-                Land Plots Database
-            </div>
-
-            <div id="sidebar-controls">
-                <div class="filter-wrapper" id="search-wrapper">
-                    <input type="text" id="search-input" placeholder="Find anything in the table">
-                    <button class="clear-filter" id="clear-search" title="Clear search">×</button>
+        <div id="table-section">
+            <div id="table-header">
+                <div id="table-header-top">
+                    <h2 id="table-title">Land Plots</h2>
+                    <div id="filters-toggle">
+                        <span id="filters-toggle-text">
+                            Filters
+                            <span id="filters-active-badge"></span>
+                        </span>
+                        <span id="filters-toggle-icon">▼</span>
+                    </div>
                 </div>
 
-                <div class="filters-row">
-                    <div class="filter-group">
-                        <label class="filter-label">Owner Name:</label>
-                        <div class="filter-wrapper" id="owner-filter-wrapper">
-                            <input type="text" id="filter-owner" class="filter-input" placeholder="Filter by owner...">
-                            <button class="clear-filter" id="clear-owner" title="Clear filter">×</button>
-                        </div>
+                <div id="filters-content">
+                    <div class="filter-wrapper" id="search-wrapper">
+                        <input type="text" id="search-input" placeholder="Find anything in the table">
+                        <button class="clear-filter" id="clear-search" title="Clear search">×</button>
                     </div>
-                    <div class="filter-group">
-                        <label class="filter-label">Plan Part:</label>
-                        <div class="filter-wrapper">
-                            <div class="multiselect-dropdown" id="planpart-multiselect">
-                                <div class="multiselect-selected">
-                                    <span class="multiselect-placeholder">Select Plan Parts...</span>
-                                </div>
-                                <div class="multiselect-options"></div>
+
+                    <div class="filters-row">
+                        <div class="filter-group">
+                            <label class="filter-label">Owner Name:</label>
+                            <div class="filter-wrapper" id="owner-filter-wrapper">
+                                <input type="text" id="filter-owner" class="filter-input" placeholder="Filter by owner...">
+                                <button class="clear-filter" id="clear-owner" title="Clear filter">×</button>
                             </div>
-                            <button class="clear-filter" id="clear-planpart" title="Clear selection" style="display: none;">×</button>
+                        </div>
+                        <div class="filter-group">
+                            <label class="filter-label">Plan Part:</label>
+                            <div class="filter-wrapper">
+                                <div class="multiselect-dropdown" id="planpart-multiselect">
+                                    <div class="multiselect-selected">
+                                        <span class="multiselect-placeholder">Select Plan Parts...</span>
+                                    </div>
+                                    <div class="multiselect-options"></div>
+                                </div>
+                                <button class="clear-filter" id="clear-planpart" title="Clear selection" style="display: none;">×</button>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="filters-row">
-                    <div class="filter-group">
-                        <label class="filter-label">Plan:</label>
-                        <select id="filter-map" class="filter-select" style="padding: 6px 8px;">
-                            <option value="">All Plans</option>
-                            <option value="map1">Restoration plan 1888</option>
-                            <option value="map2">Restoration plan 1891</option>
-                        </select>
+                    <div class="filters-row">
+                        <div class="filter-group">
+                            <label class="filter-label">Plan:</label>
+                            <select id="filter-map" class="filter-select" style="padding: 6px 8px;">
+                                <option value="">All Plans</option>
+                                <option value="map1">Restoration plan 1888</option>
+                                <option value="map2">Restoration plan 1891</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -557,6 +811,10 @@
             integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
             crossorigin=""></script>
 
+    <!-- Leaflet Gesture Handling Plugin -->
+    <script src="https://cdn.jsdelivr.net/npm/leaflet-gesture-handling@1.2.2/dist/leaflet-gesture-handling.min.js"
+            crossorigin=""></script>
+
     <!-- Leaflet TextPath Plugin -->
     <script src="https://cdn.jsdelivr.net/npm/leaflet-textpath@1.2.3/leaflet.textpath.min.js"></script>
 
@@ -587,7 +845,16 @@
             // MAP INITIALIZATION
             // ========================================
 
-            const map = L.map('map').setView(mapCenter, initialZoom);
+            const map = L.map('map', {
+                gestureHandling: true,
+                gestureHandlingOptions: {
+                    text: {
+                        touch: "Use two fingers to move the map",
+                        scroll: "Use Ctrl + scroll to zoom the map",
+                        scrollMac: "Use ⌘ + scroll to zoom the map"
+                    }
+                }
+            }).setView(mapCenter, initialZoom);
 
             // OpenStreetMap base layer
             const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -796,8 +1063,10 @@
                                     document.querySelectorAll('#data-table tbody tr').forEach(row => {
                                         if (row.dataset.fid == props.fid) {
                                             row.classList.add('selected');
-                                            // Scroll row into view
-                                            row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                            // Scroll row to top only if clicked on map (not from table)
+                                            if (!openedFromTableClick) {
+                                                scrollRowIntoView(row);
+                                            }
                                         }
                                     });
                                 });
@@ -911,8 +1180,10 @@
                                     document.querySelectorAll('#data-table tbody tr').forEach(row => {
                                         if (row.dataset.fid == props.fid) {
                                             row.classList.add('selected');
-                                            // Scroll row into view
-                                            row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                            // Scroll row to top only if clicked on map (not from table)
+                                            if (!openedFromTableClick) {
+                                                scrollRowIntoView(row);
+                                            }
                                         }
                                     });
                                 });
@@ -1201,18 +1472,37 @@
                 console.log(`✓ Table populated: ${rowCount} entries`);
 
                 // Update header with count
-                document.getElementById('sidebar-header').textContent =
-                    `Land Plots Database (${rowCount})`;
+                document.getElementById('table-title').textContent =
+                    `Land Plots (${rowCount})`;
             }
 
-            // Open popup for a specific plot on the map (called from table row click)
+            // Flag to track if popup was opened from table row click
+            let openedFromTableClick = false;
+
+            // Scroll row to the top of table container (without scrolling the page)
+            function scrollRowIntoView(row) {
+                const tableContainer = document.getElementById('table-container');
+                const tableHeader = document.querySelector('#data-table thead');
+                const headerHeight = tableHeader ? tableHeader.offsetHeight : 0;
+
+                // Calculate row position relative to table start
+                const rowTop = row.offsetTop;
+
+                // Scroll so the row appears right below the sticky header
+                tableContainer.scrollTop = rowTop - headerHeight - 5; // 5px padding
+            }
+
+            // Open popup for plot when clicking table row (called from table row click)
             function openPopupForPlot(fid, sourceLayer) {
+                // Set flag to prevent scrolling when popup opens
+                openedFromTableClick = true;
+
                 // Clear previous table selection
                 document.querySelectorAll('#data-table tbody tr.selected').forEach(row => {
                     row.classList.remove('selected');
                 });
 
-                // Highlight selected row
+                // Highlight selected row (but don't scroll yet)
                 document.querySelectorAll('#data-table tbody tr').forEach(row => {
                     if (row.dataset.fid == fid) {
                         row.classList.add('selected');
@@ -1233,8 +1523,8 @@
 
                         const center = layer.getBounds().getCenter();
 
-                        // Pan and zoom to plot
-                        map.setView(center, Math.max(map.getZoom(), 18));
+                        // Pan and zoom to plot (without animating to prevent page scroll)
+                        map.setView(center, Math.max(map.getZoom(), 18), { animate: false });
 
                         // Open popup
                         if (layer.getPopup()) {
@@ -1242,6 +1532,11 @@
                         }
                     }
                 });
+
+                // Reset flag after popup opens
+                setTimeout(() => {
+                    openedFromTableClick = false;
+                }, 100);
             }
 
             // ========================================
@@ -1502,6 +1797,28 @@
                 });
             }
 
+            // Update active filters badge
+            function updateActiveFiltersBadge() {
+                let activeCount = 0;
+
+                const searchTerm = document.getElementById('search-input').value.trim();
+                const ownerFilter = document.getElementById('filter-owner').value.trim();
+                const mapFilter = document.getElementById('filter-map').value;
+
+                if (searchTerm !== '') activeCount++;
+                if (ownerFilter !== '') activeCount++;
+                if (mapFilter !== '') activeCount++;
+                if (selectedPlanParts.size > 0) activeCount++;
+
+                const badge = document.getElementById('filters-active-badge');
+                if (activeCount > 0) {
+                    badge.textContent = activeCount + ' active';
+                    badge.classList.add('show');
+                } else {
+                    badge.classList.remove('show');
+                }
+            }
+
             // Apply all filters (search + owner + plan part + map)
             function applyFilters() {
                 // Get all filter values
@@ -1511,6 +1828,9 @@
 
                 // Update clear button visibility
                 updateClearButtonVisibility();
+
+                // Update active filters badge
+                updateActiveFiltersBadge();
 
                 // Filter data
                 const filtered = allTableData.filter(feature => {
@@ -1697,7 +2017,23 @@
 
             // Initialize sort indicators
             updateSortIndicators();
-            
+
+            // ========================================
+            // FILTERS TOGGLE
+            // ========================================
+
+            // Hide filters by default
+            const filtersContent = document.getElementById('filters-content');
+            const filtersIcon = document.getElementById('filters-toggle-icon');
+            filtersContent.classList.add('collapsed');
+            filtersIcon.classList.add('collapsed');
+
+            // Toggle filters visibility
+            document.getElementById('filters-toggle').addEventListener('click', function() {
+                filtersContent.classList.toggle('collapsed');
+                filtersIcon.classList.toggle('collapsed');
+            });
+
             // ========================================
             // MAP LEGEND
             // ========================================
@@ -1739,5 +2075,19 @@
             console.log('🗺️ Map initialized! Center:', mapCenter, 'Zoom:', initialZoom);
         });
     </script>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                Radashkovichy Restoration Plans 1888-1891
+            </div>
+            <div class="footer-section">
+                Historical Map Visualization Project
+            </div>
+            <div class="footer-section">
+                &copy; 2025 | Data: Historical Archives
+            </div>
+        </div>
+    </footer>
 </body>
 </html>
