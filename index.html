@@ -90,7 +90,7 @@
         #table-section {
             background: white;
             border-radius: 12px;
-            overflow: hidden;
+            overflow: visible;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             margin-bottom: 30px;
         }
@@ -164,7 +164,7 @@
 
         #filters-content {
             padding: 20px 30px;
-            overflow: hidden;
+            overflow: visible;
             transition: max-height 0.3s ease-out, opacity 0.3s ease-out, padding 0.3s ease-out;
             max-height: 500px;
             opacity: 1;
@@ -177,6 +177,7 @@
             opacity: 0;
             padding-top: 0;
             padding-bottom: 0;
+            overflow: hidden;
         }
 
         #search-wrapper {
@@ -288,7 +289,7 @@
             border-radius: 4px;
             margin-top: 2px;
             display: none;
-            z-index: 1000;
+            z-index: 10000;
             box-shadow: 0 2px 8px rgba(0,0,0,0.15);
         }
 
@@ -302,10 +303,15 @@
             display: flex;
             align-items: center;
             font-size: 13px;
+            color: #333;
         }
 
         .multiselect-option:hover {
             background: #f5f5f5;
+        }
+
+        .multiselect-option label {
+            color: #333;
         }
 
         .multiselect-option input[type="checkbox"] {
@@ -337,7 +343,23 @@
             width: 100%;
             border-collapse: collapse;
             font-size: 13px;
+            table-layout: fixed;
         }
+
+        /* Desktop column widths */
+        #data-table th:nth-child(1) { width: 4%; }   /* No. */
+        #data-table th:nth-child(2) { width: 7%; }   /* First name translit */
+        #data-table th:nth-child(3) { width: 7%; }   /* Last name translit */
+        #data-table th:nth-child(4) { width: 7%; }   /* Patronymic translit */
+        #data-table th:nth-child(5) { width: 7%; }   /* First name native */
+        #data-table th:nth-child(6) { width: 8%; }   /* Last name native */
+        #data-table th:nth-child(7) { width: 7%; }   /* Patronymic native */
+        #data-table th:nth-child(8) { width: 11%; }  /* Ethnic and religious affiliation */
+        #data-table th:nth-child(9) { width: 6%; }   /* Sex */
+        #data-table th:nth-child(10) { width: 6%; }  /* Length */
+        #data-table th:nth-child(11) { width: 5%; }  /* Width */
+        #data-table th:nth-child(12) { width: 8%; }  /* Plan part */
+        #data-table th:nth-child(13) { width: 18%; } /* Note */
 
         /* Table Header */
         #data-table thead {
@@ -357,6 +379,7 @@
             user-select: none;
             position: relative;
             white-space: nowrap;
+            vertical-align: top;
         }
 
         #data-table th:hover {
@@ -385,6 +408,9 @@
         #data-table td {
             padding: 8px;
             border-bottom: 1px solid #e0e0e0;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            vertical-align: top;
         }
 
         /* Table Rows */
@@ -499,6 +525,54 @@
             vertical-align: middle;
         }
 
+        /* Tablet legend styles */
+        @media (max-width: 1024px) {
+            .legend {
+                padding: 8px;
+                font-size: 11px;
+                line-height: 18px;
+            }
+
+            .legend-title {
+                margin-bottom: 4px;
+                font-size: 11px;
+            }
+
+            .legend-item {
+                margin: 2px 0;
+            }
+
+            .legend-color {
+                width: 16px;
+                height: 12px;
+                margin-right: 4px;
+            }
+        }
+
+        /* Mobile legend styles */
+        @media (max-width: 768px) {
+            .legend {
+                padding: 6px;
+                font-size: 10px;
+                line-height: 16px;
+            }
+
+            .legend-title {
+                margin-bottom: 3px;
+                font-size: 10px;
+            }
+
+            .legend-item {
+                margin: 2px 0;
+            }
+
+            .legend-color {
+                width: 14px;
+                height: 10px;
+                margin-right: 3px;
+            }
+        }
+
         /* ========================================
            MAP NAVIGATION CONTROL
            ======================================== */
@@ -549,6 +623,140 @@
             border-color: #2c5f2d;
         }
 
+        /* Tablet navigation styles */
+        @media (max-width: 1024px) {
+            .map-navigation {
+                padding: 8px;
+            }
+
+            .map-navigation-title {
+                font-size: 11px;
+                margin-bottom: 6px;
+            }
+
+            .map-nav-btn {
+                padding: 5px 8px;
+                font-size: 10px;
+            }
+        }
+
+        /* Mobile navigation styles */
+        @media (max-width: 768px) {
+            .map-navigation {
+                padding: 6px;
+            }
+
+            .map-navigation-title {
+                font-size: 10px;
+                margin-bottom: 5px;
+            }
+
+            .map-nav-btn {
+                padding: 4px 6px;
+                font-size: 9px;
+            }
+        }
+
+        /* ========================================
+           LEAFLET LAYER CONTROL (RESPONSIVE)
+           ======================================== */
+
+        /* Tablet layer control styles */
+        @media (max-width: 1024px) {
+            .leaflet-control-layers {
+                font-size: 11px;
+            }
+
+            .leaflet-control-layers-toggle {
+                width: 32px;
+                height: 32px;
+            }
+
+            .leaflet-control-layers-expanded {
+                padding: 6px 8px;
+            }
+
+            .leaflet-control-layers label {
+                font-size: 11px;
+                line-height: 1.4;
+            }
+        }
+
+        /* Mobile layer control styles */
+        @media (max-width: 768px) {
+            .leaflet-control-layers {
+                font-size: 10px;
+            }
+
+            .leaflet-control-layers-toggle {
+                width: 28px;
+                height: 28px;
+            }
+
+            .leaflet-control-layers-expanded {
+                padding: 5px 6px;
+            }
+
+            .leaflet-control-layers label {
+                font-size: 10px;
+                line-height: 1.3;
+            }
+
+            .leaflet-control-layers input {
+                transform: scale(0.9);
+            }
+        }
+
+        /* ========================================
+           LEAFLET SCALE CONTROL (RESPONSIVE)
+           ======================================== */
+
+        /* Tablet scale control styles */
+        @media (max-width: 1024px) {
+            .leaflet-control-scale {
+                font-size: 10px;
+            }
+
+            .leaflet-control-scale-line {
+                padding: 1px 4px;
+            }
+        }
+
+        /* Mobile scale control styles */
+        @media (max-width: 768px) {
+            .leaflet-control-scale {
+                font-size: 9px;
+            }
+
+            .leaflet-control-scale-line {
+                padding: 1px 3px;
+            }
+        }
+
+        /* ========================================
+           LEAFLET ZOOM CONTROL (RESPONSIVE)
+           ======================================== */
+
+        /* Tablet zoom control styles */
+        @media (max-width: 1024px) {
+            .leaflet-control-zoom a {
+                width: 28px;
+                height: 28px;
+                line-height: 28px;
+                font-size: 16px;
+            }
+        }
+
+        /* Mobile zoom control styles */
+        @media (max-width: 768px) {
+            .leaflet-control-zoom a {
+                width: 26px;
+                height: 26px;
+                line-height: 26px;
+                font-size: 14px;
+            }
+        }
+
         /* ========================================
            LOADING STATE
            ======================================== */
@@ -563,6 +771,69 @@
             border-radius: 5px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.3);
             z-index: 9999;
+        }
+
+        /* ========================================
+           SCROLL TO MAP BUTTON
+           ======================================== */
+
+        #scroll-to-map {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.5);
+            color: #2c5f2d;
+            border: 1px solid rgba(44, 95, 45, 0.3);
+            border-radius: 30px;
+            padding: 8px 14px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s, background 0.2s, transform 0.2s;
+            white-space: nowrap;
+            backdrop-filter: blur(6px);
+        }
+
+        #scroll-to-map.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        #scroll-to-map:hover {
+            background: rgba(255, 255, 255, 0.75);
+            border-color: rgba(44, 95, 45, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+        }
+
+        #scroll-to-map:active {
+            transform: translateY(0);
+        }
+
+        #scroll-to-map-arrow {
+            font-size: 16px;
+            line-height: 1;
+        }
+
+        /* Mobile adjustments */
+        @media (max-width: 768px) {
+            #scroll-to-map {
+                bottom: 15px;
+                right: 15px;
+                padding: 7px 12px;
+                font-size: 11px;
+            }
+
+            #scroll-to-map-arrow {
+                font-size: 14px;
+            }
         }
 
         /* ========================================
@@ -608,6 +879,30 @@
            RESPONSIVE DESIGN
            ======================================== */
 
+        /* Medium screens */
+        @media (max-width: 1400px) {
+            #data-table th {
+                white-space: normal;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+                word-break: break-word;
+            }
+
+            #data-table th:nth-child(1) { width: 4%; }   /* No. */
+            #data-table th:nth-child(2) { width: 7%; }   /* First name translit */
+            #data-table th:nth-child(3) { width: 7%; }   /* Last name translit */
+            #data-table th:nth-child(4) { width: 7%; }   /* Patronymic translit */
+            #data-table th:nth-child(5) { width: 7%; }   /* First name native */
+            #data-table th:nth-child(6) { width: 8%; }   /* Last name native */
+            #data-table th:nth-child(7) { width: 7%; }   /* Patronymic native */
+            #data-table th:nth-child(8) { width: 12%; }  /* Ethnic and religious affiliation */
+            #data-table th:nth-child(9) { width: 6%; }   /* Sex */
+            #data-table th:nth-child(10) { width: 6%; }  /* Length */
+            #data-table th:nth-child(11) { width: 5%; }  /* Width */
+            #data-table th:nth-child(12) { width: 8%; }  /* Plan part */
+            #data-table th:nth-child(13) { width: 16%; } /* Note */
+        }
+
         /* Tablets */
         @media (max-width: 1024px) {
             #page-header {
@@ -642,6 +937,28 @@
             #filters-content {
                 padding: 18px 20px;
             }
+
+            /* Tablet column widths */
+            #data-table th {
+                white-space: normal;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+                word-break: break-word;
+            }
+
+            #data-table th:nth-child(1) { width: 5%; }   /* No. */
+            #data-table th:nth-child(2) { width: 7%; }   /* First name translit */
+            #data-table th:nth-child(3) { width: 7%; }   /* Last name translit */
+            #data-table th:nth-child(4) { width: 7%; }   /* Patronymic translit */
+            #data-table th:nth-child(5) { width: 7%; }   /* First name native */
+            #data-table th:nth-child(6) { width: 8%; }   /* Last name native */
+            #data-table th:nth-child(7) { width: 7%; }   /* Patronymic native */
+            #data-table th:nth-child(8) { width: 12%; }  /* Ethnic and religious affiliation */
+            #data-table th:nth-child(9) { width: 7%; }   /* Sex */
+            #data-table th:nth-child(10) { width: 7%; }  /* Length */
+            #data-table th:nth-child(11) { width: 6%; }  /* Width */
+            #data-table th:nth-child(12) { width: 9%; }  /* Plan part */
+            #data-table th:nth-child(13) { width: 11%; } /* Note */
         }
 
         /* Mobile */
@@ -714,14 +1031,51 @@
             .filter-group {
                 width: 100%;
             }
+
+            /* Mobile column widths - smaller font and adjusted proportions */
+            #data-table {
+                font-size: 11px;
+            }
+
+            #data-table th {
+                padding: 6px 4px;
+                white-space: normal;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+                word-break: break-word;
+            }
+
+            #data-table td {
+                padding: 6px 4px;
+            }
+
+            #data-table th:nth-child(1) { width: 6%; }   /* No. */
+            #data-table th:nth-child(2) { width: 7%; }   /* First name translit */
+            #data-table th:nth-child(3) { width: 8%; }   /* Last name translit */
+            #data-table th:nth-child(4) { width: 7%; }   /* Patronymic translit */
+            #data-table th:nth-child(5) { width: 7%; }   /* First name native */
+            #data-table th:nth-child(6) { width: 8%; }   /* Last name native */
+            #data-table th:nth-child(7) { width: 6%; }   /* Patronymic native */
+            #data-table th:nth-child(8) { width: 11%; }  /* Ethnic and religious affiliation */
+            #data-table th:nth-child(9) { width: 7%; }   /* Sex */
+            #data-table th:nth-child(10) { width: 7%; }  /* Length */
+            #data-table th:nth-child(11) { width: 6%; }  /* Width */
+            #data-table th:nth-child(12) { width: 10%; } /* Plan part */
+            #data-table th:nth-child(13) { width: 10%; } /* Note */
         }
     </style>
 </head>
 <body>
     <div id="loading">Map loading...</div>
 
+    <!-- Scroll to Map Button -->
+    <button id="scroll-to-map" title="Back to map">
+        <span id="scroll-to-map-arrow">↑</span>
+        <span>Back to Map</span>
+    </button>
+
     <header id="page-header">
-        <h1 id="page-title">Plans for the restoration of Radoshkovichi after the fires of 1888 and 1891 (indicating land plots and owners)</h1>
+        <h1 id="page-title">Plans for the restoration of Radoshkovichi after the fires of 1888 and 1891:<br>indicating land plots and owners</h1>
         <div id="page-description">
             <!-- Description text will be added here -->
         </div>
@@ -784,15 +1138,27 @@
                         </div>
                         <div class="filter-group">
                             <label class="filter-label">Ethnic and religious affiliation:</label>
-                            <select id="filter-religion" class="filter-select" style="padding: 6px 8px;">
-                                <option value="">All</option>
-                            </select>
+                            <div class="filter-wrapper">
+                                <div class="multiselect-dropdown" id="religion-multiselect">
+                                    <div class="multiselect-selected">
+                                        <span class="multiselect-placeholder">Select Religion...</span>
+                                    </div>
+                                    <div class="multiselect-options"></div>
+                                </div>
+                                <button class="clear-filter" id="clear-religion" title="Clear selection" style="display: none;">×</button>
+                            </div>
                         </div>
                         <div class="filter-group">
                             <label class="filter-label">Sex:</label>
-                            <select id="filter-sex" class="filter-select" style="padding: 6px 8px;">
-                                <option value="">All</option>
-                            </select>
+                            <div class="filter-wrapper">
+                                <div class="multiselect-dropdown" id="sex-multiselect">
+                                    <div class="multiselect-selected">
+                                        <span class="multiselect-placeholder">Select Sex...</span>
+                                    </div>
+                                    <div class="multiselect-options"></div>
+                                </div>
+                                <button class="clear-filter" id="clear-sex" title="Clear selection" style="display: none;">×</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -814,7 +1180,6 @@
                             <th data-sort="length">Length</th>
                             <th data-sort="width">Width</th>
                             <th data-sort="planpart">Plan part</th>
-                            <th data-sort="owneroriginal">Owner name<br>original</th>
                             <th data-sort="note">Note</th>
                         </tr>
                     </thead>
@@ -1012,11 +1377,11 @@
 
             // Load all GeoJSON files in parallel
             Promise.all([
-                fetch('data/map1-polygons.geojson').then(r => r.json()),
+                fetch('data/plan_1888_polygons.geojson').then(r => r.json()),
                 fetch('data/map1-buildings.geojson').then(r => r.json()),
                 fetch('data/map1-buildings2.geojson').then(r => r.json()),
                 fetch('data/map1-lables.geojson').then(r => r.json()),
-                fetch('data/map2_polygons.geojson').then(r => r.json()),
+                fetch('data/plan_1891_polygons.geojson').then(r => r.json()),
                 fetch('data/map2_labels.geojson').then(r => r.json())
             ])
             .then(([polygons1Data, polygons3Data, polygons2Data, labelsData, map2PolygonsData, map2LabelsData]) => {
@@ -1028,21 +1393,33 @@
                 polygons3Data.features.forEach(f => f.properties.source_layer = 'polygons3');
                 map2PolygonsData.features.forEach(f => f.properties.source_layer = 'map2-polygons1');
 
-                // Combine all features into a single array
+                // Sort each layer type by layer_order (reverse: high to low)
+                polygons1Data.features.sort((a, b) => {
+                    const orderA = a.properties.layer_order !== undefined ? a.properties.layer_order : -Infinity;
+                    const orderB = b.properties.layer_order !== undefined ? b.properties.layer_order : -Infinity;
+                    return orderB - orderA;
+                });
+
+                polygons2Data.features.sort((a, b) => {
+                    const orderA = a.properties.layer_order !== undefined ? a.properties.layer_order : -Infinity;
+                    const orderB = b.properties.layer_order !== undefined ? b.properties.layer_order : -Infinity;
+                    return orderB - orderA;
+                });
+
+                polygons3Data.features.sort((a, b) => {
+                    const orderA = a.properties.layer_order !== undefined ? a.properties.layer_order : -Infinity;
+                    const orderB = b.properties.layer_order !== undefined ? b.properties.layer_order : -Infinity;
+                    return orderB - orderA;
+                });
+
+                // Combine features: polygons1 first (bottom), then polygons2, then polygons3 (top)
                 const allFeatures = [
                     ...polygons1Data.features,
                     ...polygons2Data.features,
                     ...polygons3Data.features
                 ];
 
-                // Sort by layer_order (features without layer_order go last)
-                allFeatures.sort((a, b) => {
-                    const orderA = a.properties.layer_order !== undefined ? a.properties.layer_order : Infinity;
-                    const orderB = b.properties.layer_order !== undefined ? b.properties.layer_order : Infinity;
-                    return orderA - orderB;
-                });
-
-                console.log(`✓ Sorted ${allFeatures.length} features by layer_order`);
+                console.log(`✓ Combined ${allFeatures.length} features: polygons1 (bottom) -> polygons2 -> polygons3 (top)`);
 
                 // Create combined GeoJSON object
                 const combinedGeoJSON = {
@@ -1539,7 +1916,6 @@
                     const length = isMap2 ? props['Length of plot'] : props['Length of plots'];
                     const width = isMap2 ? props['Width of plot'] : props['Width of plots'];
                     const planPart = isMap2 ? props['Plan part'] : null;
-                    const ownerOriginal = props['Name native'];
                     const note = props['Note'];
 
                     row.innerHTML = `
@@ -1555,7 +1931,6 @@
                         <td>${length || '-'}</td>
                         <td>${width || '-'}</td>
                         <td>${planPart || '-'}</td>
-                        <td>${ownerOriginal || '-'}</td>
                         <td>${note || '-'}</td>
                     `;
 
@@ -1679,8 +2054,10 @@
                 initialSortTableData();
             }
 
-            // Track selected plan parts
+            // Track selected values for multiselect filters
             let selectedPlanParts = new Set();
+            let selectedReligions = new Set();
+            let selectedSexes = new Set();
 
             // Populate Plan part multiselect with unique values
             function populatePlanPartFilter() {
@@ -1751,65 +2128,228 @@
                 }
             }
 
-            // Toggle multiselect dropdown
+            // Toggle multiselect dropdown for all multiselect elements
             document.addEventListener('click', function(e) {
-                const multiselect = document.getElementById('planpart-multiselect');
-                const selected = multiselect.querySelector('.multiselect-selected');
-                const options = multiselect.querySelector('.multiselect-options');
+                // Handle all multiselect dropdowns
+                document.querySelectorAll('.multiselect-dropdown').forEach(multiselect => {
+                    const selected = multiselect.querySelector('.multiselect-selected');
+                    const options = multiselect.querySelector('.multiselect-options');
 
-                if (selected.contains(e.target)) {
-                    options.classList.toggle('show');
-                } else if (!multiselect.contains(e.target)) {
-                    options.classList.remove('show');
-                }
+                    if (selected.contains(e.target)) {
+                        // Close all other dropdowns
+                        document.querySelectorAll('.multiselect-dropdown .multiselect-options').forEach(opt => {
+                            if (opt !== options) {
+                                opt.classList.remove('show');
+                            }
+                        });
+                        // Toggle current dropdown
+                        options.classList.toggle('show');
+                    } else if (!multiselect.contains(e.target)) {
+                        options.classList.remove('show');
+                    }
+                });
             });
 
             // Populate Religion filter with unique values
             function populateReligionFilter() {
                 const uniqueReligions = new Set();
+                let hasEmpty = false;
 
                 // Collect unique Religion values
                 allTableData.forEach(feature => {
                     const props = feature.properties;
                     if (props['Religion']) {
                         uniqueReligions.add(props['Religion']);
+                    } else {
+                        hasEmpty = true;
                     }
                 });
 
-                // Get the select element
-                const religionSelect = document.getElementById('filter-religion');
+                // Get the options container
+                const optionsContainer = document.querySelector('#religion-multiselect .multiselect-options');
+                optionsContainer.innerHTML = '';
 
-                // Add options for each unique religion
+                // Add "No Data" option if there are empty values
+                if (hasEmpty) {
+                    const option = document.createElement('div');
+                    option.className = 'multiselect-option';
+
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.value = '__NO_DATA__';
+                    checkbox.id = 'religion-no-data';
+
+                    const label = document.createElement('label');
+                    label.textContent = 'No Data';
+                    label.htmlFor = 'religion-no-data';
+                    label.style.cursor = 'pointer';
+                    label.style.flex = '1';
+
+                    option.appendChild(checkbox);
+                    option.appendChild(label);
+
+                    checkbox.addEventListener('change', function() {
+                        if (this.checked) {
+                            selectedReligions.add(this.value);
+                        } else {
+                            selectedReligions.delete(this.value);
+                        }
+                        updateReligionDisplay();
+                        applyFilters();
+                    });
+
+                    optionsContainer.appendChild(option);
+                }
+
+                // Add checkboxes for each unique religion
                 Array.from(uniqueReligions).sort().forEach(religion => {
-                    const option = document.createElement('option');
-                    option.value = religion;
-                    option.textContent = religion;
-                    religionSelect.appendChild(option);
+                    const option = document.createElement('div');
+                    option.className = 'multiselect-option';
+
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.value = religion;
+                    checkbox.id = `religion-${religion}`;
+
+                    const label = document.createElement('label');
+                    label.textContent = religion;
+                    label.htmlFor = `religion-${religion}`;
+                    label.style.cursor = 'pointer';
+                    label.style.flex = '1';
+
+                    option.appendChild(checkbox);
+                    option.appendChild(label);
+
+                    checkbox.addEventListener('change', function() {
+                        if (this.checked) {
+                            selectedReligions.add(this.value);
+                        } else {
+                            selectedReligions.delete(this.value);
+                        }
+                        updateReligionDisplay();
+                        applyFilters();
+                    });
+
+                    optionsContainer.appendChild(option);
                 });
+
+                // Initialize display
+                updateReligionDisplay();
+            }
+
+            // Update the religion multiselect display text
+            function updateReligionDisplay() {
+                const selectedDiv = document.querySelector('#religion-multiselect .multiselect-selected');
+                const clearButton = document.getElementById('clear-religion');
+
+                if (selectedReligions.size === 0) {
+                    selectedDiv.innerHTML = '<span class="multiselect-placeholder">Select Religion...</span>';
+                    clearButton.style.display = 'none';
+                } else {
+                    selectedDiv.innerHTML = `<span class="multiselect-count">${selectedReligions.size} selected</span>`;
+                    clearButton.style.display = 'block';
+                }
             }
 
             // Populate Sex filter with unique values
             function populateSexFilter() {
                 const uniqueSexes = new Set();
+                let hasEmpty = false;
 
                 // Collect unique Sex values
                 allTableData.forEach(feature => {
                     const props = feature.properties;
                     if (props['Sex']) {
                         uniqueSexes.add(props['Sex']);
+                    } else {
+                        hasEmpty = true;
                     }
                 });
 
-                // Get the select element
-                const sexSelect = document.getElementById('filter-sex');
+                // Get the options container
+                const optionsContainer = document.querySelector('#sex-multiselect .multiselect-options');
+                optionsContainer.innerHTML = '';
 
-                // Add options for each unique sex
+                // Add "No Data" option if there are empty values
+                if (hasEmpty) {
+                    const option = document.createElement('div');
+                    option.className = 'multiselect-option';
+
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.value = '__NO_DATA__';
+                    checkbox.id = 'sex-no-data';
+
+                    const label = document.createElement('label');
+                    label.textContent = 'No Data';
+                    label.htmlFor = 'sex-no-data';
+                    label.style.cursor = 'pointer';
+                    label.style.flex = '1';
+
+                    option.appendChild(checkbox);
+                    option.appendChild(label);
+
+                    checkbox.addEventListener('change', function() {
+                        if (this.checked) {
+                            selectedSexes.add(this.value);
+                        } else {
+                            selectedSexes.delete(this.value);
+                        }
+                        updateSexDisplay();
+                        applyFilters();
+                    });
+
+                    optionsContainer.appendChild(option);
+                }
+
+                // Add checkboxes for each unique sex
                 Array.from(uniqueSexes).sort().forEach(sex => {
-                    const option = document.createElement('option');
-                    option.value = sex;
-                    option.textContent = sex;
-                    sexSelect.appendChild(option);
+                    const option = document.createElement('div');
+                    option.className = 'multiselect-option';
+
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.value = sex;
+                    checkbox.id = `sex-${sex}`;
+
+                    const label = document.createElement('label');
+                    label.textContent = sex;
+                    label.htmlFor = `sex-${sex}`;
+                    label.style.cursor = 'pointer';
+                    label.style.flex = '1';
+
+                    option.appendChild(checkbox);
+                    option.appendChild(label);
+
+                    checkbox.addEventListener('change', function() {
+                        if (this.checked) {
+                            selectedSexes.add(this.value);
+                        } else {
+                            selectedSexes.delete(this.value);
+                        }
+                        updateSexDisplay();
+                        applyFilters();
+                    });
+
+                    optionsContainer.appendChild(option);
                 });
+
+                // Initialize display
+                updateSexDisplay();
+            }
+
+            // Update the sex multiselect display text
+            function updateSexDisplay() {
+                const selectedDiv = document.querySelector('#sex-multiselect .multiselect-selected');
+                const clearButton = document.getElementById('clear-sex');
+
+                if (selectedSexes.size === 0) {
+                    selectedDiv.innerHTML = '<span class="multiselect-placeholder">Select Sex...</span>';
+                    clearButton.style.display = 'none';
+                } else {
+                    selectedDiv.innerHTML = `<span class="multiselect-count">${selectedSexes.size} selected</span>`;
+                    clearButton.style.display = 'block';
+                }
             }
 
             // Sort table data
@@ -1861,10 +2401,6 @@
                         case 'planpart':
                             valueA = isMap2A ? (propsA['Plan part'] || '').toLowerCase() : '';
                             valueB = isMap2B ? (propsB['Plan part'] || '').toLowerCase() : '';
-                            break;
-                        case 'owneroriginal':
-                            valueA = (propsA['Name native'] || '').toLowerCase();
-                            valueB = (propsB['Name native'] || '').toLowerCase();
                             break;
                         case 'religion':
                             valueA = (propsA['Religion'] || '').toLowerCase();
@@ -1965,15 +2501,13 @@
                 const searchTerm = document.getElementById('search-input').value.trim();
                 const ownerFilter = document.getElementById('filter-owner').value.trim();
                 const mapFilter = document.getElementById('filter-map').value;
-                const religionFilter = document.getElementById('filter-religion').value;
-                const sexFilter = document.getElementById('filter-sex').value;
 
                 if (searchTerm !== '') activeCount++;
                 if (ownerFilter !== '') activeCount++;
                 if (mapFilter !== '') activeCount++;
-                if (religionFilter !== '') activeCount++;
-                if (sexFilter !== '') activeCount++;
                 if (selectedPlanParts.size > 0) activeCount++;
+                if (selectedReligions.size > 0) activeCount++;
+                if (selectedSexes.size > 0) activeCount++;
 
                 const badge = document.getElementById('filters-active-badge');
                 if (activeCount > 0) {
@@ -1990,8 +2524,6 @@
                 const searchTerm = document.getElementById('search-input').value.toLowerCase().trim();
                 const ownerFilter = document.getElementById('filter-owner').value.toLowerCase().trim();
                 const mapFilter = document.getElementById('filter-map').value;
-                const religionFilter = document.getElementById('filter-religion').value;
-                const sexFilter = document.getElementById('filter-sex').value;
 
                 // Update clear button visibility
                 updateClearButtonVisibility();
@@ -2010,16 +2542,30 @@
                         if (mapFilter === 'map2' && !isMap2) return false;
                     }
 
-                    // Filter by religion
-                    if (religionFilter !== '') {
+                    // Filter by religion (multiselect)
+                    if (selectedReligions.size > 0) {
                         const religion = props['Religion'] || '';
-                        if (religion !== religionFilter) return false;
+                        const isEmpty = !religion;
+
+                        // Check if "No Data" is selected and record is empty
+                        const matchesNoData = selectedReligions.has('__NO_DATA__') && isEmpty;
+                        // Check if the value is in selected religions
+                        const matchesValue = selectedReligions.has(religion);
+
+                        if (!matchesNoData && !matchesValue) return false;
                     }
 
-                    // Filter by sex
-                    if (sexFilter !== '') {
+                    // Filter by sex (multiselect)
+                    if (selectedSexes.size > 0) {
                         const sex = props['Sex'] || '';
-                        if (sex !== sexFilter) return false;
+                        const isEmpty = !sex;
+
+                        // Check if "No Data" is selected and record is empty
+                        const matchesNoData = selectedSexes.has('__NO_DATA__') && isEmpty;
+                        // Check if the value is in selected sexes
+                        const matchesValue = selectedSexes.has(sex);
+
+                        if (!matchesNoData && !matchesValue) return false;
                     }
 
                     // Filter by search term (plot number or any name field)
@@ -2045,10 +2591,6 @@
                         if (firstNameNative.includes(searchTerm) || lastNameNative.includes(searchTerm) || patronymicNative.includes(searchTerm)) {
                             matchesSearch = true;
                         }
-
-                        // Check Owner Name (original)
-                        const ownerOriginal = String(props['Name native'] || '').toLowerCase();
-                        if (ownerOriginal.includes(searchTerm)) matchesSearch = true;
 
                         // Check Length
                         const length = String(isMap2 ? (props['Length of plot'] || '') : (props['Length of plots'] || '')).toLowerCase();
@@ -2099,12 +2641,6 @@
                             matchesOwner = true;
                         }
 
-                        // Check Owner Name (original)
-                        const ownerOriginal = String(props['Name native'] || '').toLowerCase();
-                        if (ownerOriginal.includes(ownerFilter)) {
-                            matchesOwner = true;
-                        }
-
                         if (!matchesOwner) return false;
                     }
 
@@ -2146,16 +2682,6 @@
 
             // Map filter handler
             document.getElementById('filter-map').addEventListener('change', function(e) {
-                applyFilters();
-            });
-
-            // Religion filter handler
-            document.getElementById('filter-religion').addEventListener('change', function(e) {
-                applyFilters();
-            });
-
-            // Sex filter handler
-            document.getElementById('filter-sex').addEventListener('change', function(e) {
                 applyFilters();
             });
 
@@ -2205,6 +2731,30 @@
                     cb.checked = false;
                 });
                 updatePlanPartDisplay();
+                applyFilters();
+            });
+
+            // Clear religion filter
+            document.getElementById('clear-religion').addEventListener('click', function(e) {
+                e.stopPropagation();
+                // Uncheck all checkboxes
+                selectedReligions.clear();
+                document.querySelectorAll('#religion-multiselect input[type="checkbox"]').forEach(cb => {
+                    cb.checked = false;
+                });
+                updateReligionDisplay();
+                applyFilters();
+            });
+
+            // Clear sex filter
+            document.getElementById('clear-sex').addEventListener('click', function(e) {
+                e.stopPropagation();
+                // Uncheck all checkboxes
+                selectedSexes.clear();
+                document.querySelectorAll('#sex-multiselect input[type="checkbox"]').forEach(cb => {
+                    cb.checked = false;
+                });
+                updateSexDisplay();
                 applyFilters();
             });
 
@@ -2274,6 +2824,44 @@
             }).addTo(map);
 
             console.log('🗺️ Map initialized! Center:', mapCenter, 'Zoom:', initialZoom);
+
+            // ========================================
+            // SCROLL TO MAP BUTTON
+            // ========================================
+
+            const scrollToMapBtn = document.getElementById('scroll-to-map');
+            const mapSection = document.getElementById('map-section');
+            const tableSection = document.getElementById('table-section');
+
+            // Show/hide button based on scroll position
+            function updateScrollToMapButton() {
+                const mapRect = mapSection.getBoundingClientRect();
+                const tableRect = tableSection.getBoundingClientRect();
+
+                // Show button when table starts appearing in viewport (top 2/3 of screen)
+                // This makes button appear earlier, when user is scrolling to table
+                const triggerPoint = window.innerHeight * 2 / 3;
+
+                if (tableRect.top < triggerPoint) {
+                    scrollToMapBtn.classList.add('show');
+                } else {
+                    scrollToMapBtn.classList.remove('show');
+                }
+            }
+
+            // Scroll to map on button click
+            scrollToMapBtn.addEventListener('click', function() {
+                mapSection.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            });
+
+            // Listen to scroll events
+            window.addEventListener('scroll', updateScrollToMapButton);
+
+            // Initial check
+            updateScrollToMapButton();
         });
     </script>
 
