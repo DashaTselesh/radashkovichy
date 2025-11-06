@@ -1095,11 +1095,11 @@
                             Filters
                             <span id="filters-active-badge"></span>
                         </span>
-                        <span id="filters-toggle-icon">▼</span>
+                        <span id="filters-toggle-icon" class="collapsed">▼</span>
                     </div>
                 </div>
 
-                <div id="filters-content">
+                <div id="filters-content" class="collapsed">
                     <div class="filter-wrapper" id="search-wrapper">
                         <input type="text" id="search-input" placeholder="Find anything in the table">
                         <button class="clear-filter" id="clear-search" title="Clear search">×</button>
@@ -1112,29 +1112,6 @@
                                 <input type="text" id="filter-owner" class="filter-input" placeholder="Filter by owner...">
                                 <button class="clear-filter" id="clear-owner" title="Clear filter">×</button>
                             </div>
-                        </div>
-                        <div class="filter-group">
-                            <label class="filter-label">Plan Part:</label>
-                            <div class="filter-wrapper">
-                                <div class="multiselect-dropdown" id="planpart-multiselect">
-                                    <div class="multiselect-selected">
-                                        <span class="multiselect-placeholder">Select Plan Parts...</span>
-                                    </div>
-                                    <div class="multiselect-options"></div>
-                                </div>
-                                <button class="clear-filter" id="clear-planpart" title="Clear selection" style="display: none;">×</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="filters-row">
-                        <div class="filter-group">
-                            <label class="filter-label">Plan:</label>
-                            <select id="filter-map" class="filter-select" style="padding: 6px 8px;">
-                                <option value="">All Plans</option>
-                                <option value="map1">Restoration plan 1888</option>
-                                <option value="map2">Restoration plan 1891</option>
-                            </select>
                         </div>
                         <div class="filter-group">
                             <label class="filter-label">Ethnic and religious affiliation:</label>
@@ -1158,6 +1135,29 @@
                                     <div class="multiselect-options"></div>
                                 </div>
                                 <button class="clear-filter" id="clear-sex" title="Clear selection" style="display: none;">×</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="filters-row">
+                        <div class="filter-group">
+                            <label class="filter-label">Plan:</label>
+                            <select id="filter-map" class="filter-select" style="padding: 6px 8px;">
+                                <option value="">All Plans</option>
+                                <option value="map1">Restoration plan 1888</option>
+                                <option value="map2">Restoration plan 1891</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label class="filter-label">Plan Part:</label>
+                            <div class="filter-wrapper">
+                                <div class="multiselect-dropdown" id="planpart-multiselect">
+                                    <div class="multiselect-selected">
+                                        <span class="multiselect-placeholder">Select Plan Parts...</span>
+                                    </div>
+                                    <div class="multiselect-options"></div>
+                                </div>
+                                <button class="clear-filter" id="clear-planpart" title="Clear selection" style="display: none;">×</button>
                             </div>
                         </div>
                     </div>
@@ -2023,24 +2023,14 @@
 
             // Save data for search and sort
             function saveTableData(features, map2Features) {
-                // Filter map1 features (polygons1) with plot number
+                // Filter map1 features (polygons1)
                 const map1Data = features.filter(feature => {
                     const sourceLayer = feature.properties.source_layer;
-                    const props = feature.properties;
-
-                    return sourceLayer === 'polygons1' &&
-                           props['Field number'] !== null &&
-                           props['Field number'] !== undefined &&
-                           props['Field number'] !== '';
+                    return sourceLayer === 'polygons1';
                 });
 
-                // Filter map2 features with Field number field
-                const map2Data = map2Features.filter(feature => {
-                    const props = feature.properties;
-                    return props['Field number'] !== null &&
-                           props['Field number'] !== undefined &&
-                           props['Field number'] !== '';
-                });
+                // Include all map2 features
+                const map2Data = map2Features;
 
                 // Combine both datasets
                 allTableData = [...map1Data, ...map2Data];
@@ -2270,38 +2260,6 @@
                 const optionsContainer = document.querySelector('#sex-multiselect .multiselect-options');
                 optionsContainer.innerHTML = '';
 
-                // Add "No Data" option if there are empty values
-                if (hasEmpty) {
-                    const option = document.createElement('div');
-                    option.className = 'multiselect-option';
-
-                    const checkbox = document.createElement('input');
-                    checkbox.type = 'checkbox';
-                    checkbox.value = '__NO_DATA__';
-                    checkbox.id = 'sex-no-data';
-
-                    const label = document.createElement('label');
-                    label.textContent = 'No Data';
-                    label.htmlFor = 'sex-no-data';
-                    label.style.cursor = 'pointer';
-                    label.style.flex = '1';
-
-                    option.appendChild(checkbox);
-                    option.appendChild(label);
-
-                    checkbox.addEventListener('change', function() {
-                        if (this.checked) {
-                            selectedSexes.add(this.value);
-                        } else {
-                            selectedSexes.delete(this.value);
-                        }
-                        updateSexDisplay();
-                        applyFilters();
-                    });
-
-                    optionsContainer.appendChild(option);
-                }
-
                 // Add checkboxes for each unique sex
                 Array.from(uniqueSexes).sort().forEach(sex => {
                     const option = document.createElement('div');
@@ -2333,6 +2291,38 @@
 
                     optionsContainer.appendChild(option);
                 });
+
+                // Add "Not Applicable" option at the end if there are empty values
+                if (hasEmpty) {
+                    const option = document.createElement('div');
+                    option.className = 'multiselect-option';
+
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.value = '__NO_DATA__';
+                    checkbox.id = 'sex-no-data';
+
+                    const label = document.createElement('label');
+                    label.textContent = 'Not Applicable';
+                    label.htmlFor = 'sex-no-data';
+                    label.style.cursor = 'pointer';
+                    label.style.flex = '1';
+
+                    option.appendChild(checkbox);
+                    option.appendChild(label);
+
+                    checkbox.addEventListener('change', function() {
+                        if (this.checked) {
+                            selectedSexes.add(this.value);
+                        } else {
+                            selectedSexes.delete(this.value);
+                        }
+                        updateSexDisplay();
+                        applyFilters();
+                    });
+
+                    optionsContainer.appendChild(option);
+                }
 
                 // Initialize display
                 updateSexDisplay();
@@ -2773,14 +2763,10 @@
             // FILTERS TOGGLE
             // ========================================
 
-            // Hide filters by default
-            const filtersContent = document.getElementById('filters-content');
-            const filtersIcon = document.getElementById('filters-toggle-icon');
-            filtersContent.classList.add('collapsed');
-            filtersIcon.classList.add('collapsed');
-
             // Toggle filters visibility
             document.getElementById('filters-toggle').addEventListener('click', function() {
+                const filtersContent = document.getElementById('filters-content');
+                const filtersIcon = document.getElementById('filters-toggle-icon');
                 filtersContent.classList.toggle('collapsed');
                 filtersIcon.classList.toggle('collapsed');
             });
