@@ -114,6 +114,69 @@
             margin: 0;
         }
 
+        #table-header-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #csv-download {
+            position: relative;
+        }
+
+        #csv-download-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            user-select: none;
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            transition: background 0.2s;
+            font-size: 13px;
+            color: white;
+        }
+
+        #csv-download-toggle:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .download-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 5px;
+            background: white;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            min-width: 200px;
+            z-index: 1000;
+            overflow: hidden;
+        }
+
+        .download-menu.show {
+            display: block;
+        }
+
+        .download-menu-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 13px;
+            color: #333;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+
+        .download-menu-item:hover {
+            background: #f0f8f0;
+        }
+
+        .download-menu-item:active {
+            background: #e0f0e0;
+        }
+
         #filters-toggle {
             display: flex;
             align-items: center;
@@ -186,10 +249,19 @@
 
         #search-input {
             width: 100%;
-            padding: 8px 28px 8px 12px;
+            padding: 8px 28px 8px 36px;
             font-size: 14px;
             border: 1px solid #ccc;
             border-radius: 4px;
+            background-image: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 12C9.76142 12 12 9.76142 12 7C12 4.23858 9.76142 2 7 2C4.23858 2 2 4.23858 2 7C2 9.76142 4.23858 12 7 12Z' stroke='%23999' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M14 14L10.5 10.5' stroke='%23999' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: left 12px center;
+            background-size: 16px;
+        }
+
+        #search-input:focus {
+            outline: none;
+            border-color: #467148;
         }
 
         .filters-row {
@@ -228,8 +300,29 @@
             flex: 1;
         }
 
+        .filter-input:focus {
+            outline: none;
+            border-color: #467148;
+        }
+
         .filter-select {
             cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%23666' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 8px center;
+            background-size: 10px;
+        }
+
+        .filter-select:hover {
+            border-color: #999;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: #467148;
         }
 
         .clear-filter {
@@ -253,6 +346,33 @@
 
         .filter-wrapper.has-value .clear-filter {
             display: block;
+        }
+
+        /* Clear all filters button */
+        #clear-all-filters-wrapper {
+            display: none;
+            text-align: right;
+            margin-top: 15px;
+        }
+
+        #clear-all-filters-wrapper.show {
+            display: block;
+        }
+
+        #clear-all-filters {
+            background: white;
+            color: #467148;
+            border: 1px solid #467148;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        #clear-all-filters:hover {
+            background: #467148;
+            color: white;
         }
 
         /* Multiselect dropdown */
@@ -298,10 +418,7 @@
         }
 
         .multiselect-option {
-            padding: 6px 10px;
             cursor: pointer;
-            display: flex;
-            align-items: center;
             font-size: 13px;
             color: #333;
         }
@@ -312,10 +429,17 @@
 
         .multiselect-option label {
             color: #333;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            width: 100%;
+            margin: 0;
+            padding: 6px 10px;
         }
 
         .multiselect-option input[type="checkbox"] {
             margin-right: 8px;
+            cursor: pointer;
         }
 
         .multiselect-placeholder {
@@ -343,23 +467,48 @@
             width: 100%;
             border-collapse: collapse;
             font-size: 13px;
-            table-layout: fixed;
+            table-layout: auto;
         }
 
-        /* Desktop column widths */
-        #data-table th:nth-child(1) { width: 4%; }   /* No. */
-        #data-table th:nth-child(2) { width: 7%; }   /* First name translit */
-        #data-table th:nth-child(3) { width: 7%; }   /* Last name translit */
-        #data-table th:nth-child(4) { width: 7%; }   /* Patronymic translit */
-        #data-table th:nth-child(5) { width: 7%; }   /* First name native */
-        #data-table th:nth-child(6) { width: 8%; }   /* Last name native */
-        #data-table th:nth-child(7) { width: 7%; }   /* Patronymic native */
-        #data-table th:nth-child(8) { width: 11%; }  /* Ethnic and religious affiliation */
-        #data-table th:nth-child(9) { width: 6%; }   /* Sex */
-        #data-table th:nth-child(10) { width: 6%; }  /* Length */
-        #data-table th:nth-child(11) { width: 5%; }  /* Width */
-        #data-table th:nth-child(12) { width: 8%; }  /* Plan part */
-        #data-table th:nth-child(13) { width: 18%; } /* Note */
+        /* Desktop column widths with min-width */
+        #data-table th:nth-child(1),
+        #data-table td:nth-child(1) { min-width: 40px; }   /* No. */
+
+        #data-table th:nth-child(2),
+        #data-table td:nth-child(2) { min-width: 60px; }   /* First name translit */
+
+        #data-table th:nth-child(3),
+        #data-table td:nth-child(3) { min-width: 60px; }   /* Last name translit */
+
+        #data-table th:nth-child(4),
+        #data-table td:nth-child(4) { min-width: 60px; }   /* Patronymic translit */
+
+        #data-table th:nth-child(5),
+        #data-table td:nth-child(5) { min-width: 60px; }   /* First name native */
+
+        #data-table th:nth-child(6),
+        #data-table td:nth-child(6) { min-width: 60px; }   /* Last name native */
+
+        #data-table th:nth-child(7),
+        #data-table td:nth-child(7) { min-width: 60px; }   /* Patronymic native */
+
+        #data-table th:nth-child(8),
+        #data-table td:nth-child(8) { min-width: 100px; }  /* Ethnic and religious affiliation */
+
+        #data-table th:nth-child(9),
+        #data-table td:nth-child(9) { min-width: 40px; }   /* Sex */
+
+        #data-table th:nth-child(10),
+        #data-table td:nth-child(10) { min-width: 40px; }  /* Length */
+
+        #data-table th:nth-child(11),
+        #data-table td:nth-child(11) { min-width: 40px; }  /* Width */
+
+        #data-table th:nth-child(12),
+        #data-table td:nth-child(12) { min-width: 90px; }  /* Plan part */
+
+        #data-table th:nth-child(13),
+        #data-table td:nth-child(13) { min-width: 120px; } /* Note */
 
         /* Table Header */
         #data-table thead {
@@ -378,8 +527,8 @@
             cursor: pointer;
             user-select: none;
             position: relative;
-            white-space: nowrap;
             vertical-align: top;
+            overflow-wrap: break-word;
         }
 
         #data-table th:hover {
@@ -388,19 +537,20 @@
 
         /* Sort Indicators */
         #data-table th[data-sort]::after {
-            content: ' ⇅';
+            content: '\00a0⇅';
             opacity: 0.3;
             font-size: 12px;
             margin-left: 5px;
+            white-space: nowrap;
         }
 
         #data-table th.sort-asc::after {
-            content: ' ▲';
+            content: '\00a0▲';
             opacity: 1;
         }
 
         #data-table th.sort-desc::after {
-            content: ' ▼';
+            content: '\00a0▼';
             opacity: 1;
         }
 
@@ -408,7 +558,6 @@
         #data-table td {
             padding: 8px;
             border-bottom: 1px solid #e0e0e0;
-            word-wrap: break-word;
             overflow-wrap: break-word;
             vertical-align: top;
         }
@@ -574,16 +723,105 @@
         }
 
         /* ========================================
-           MAP NAVIGATION CONTROL
+           COLLAPSIBLE CONTROL PANEL
            ======================================== */
 
-        .map-navigation {
+        .leaflet-control-panel {
             background: white;
-            padding: 10px;
             border-radius: 5px;
             box-shadow: 0 1px 5px rgba(0,0,0,0.4);
-            margin-top: 10px;
+            min-width: 200px;
         }
+
+        .panel-toggle-btn {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: #2c5f2d;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px 5px 0 0;
+            font-weight: bold;
+            font-size: 12px;
+            user-select: none;
+        }
+
+        .panel-toggle-btn:hover {
+            background: #3a7a3e;
+        }
+
+        .panel-toggle-btn.collapsed {
+            border-radius: 5px;
+        }
+
+        .panel-icon {
+            font-size: 14px;
+            margin-right: 6px;
+        }
+
+        .panel-arrow {
+            font-size: 12px;
+            transition: transform 0.3s;
+        }
+
+        .panel-toggle-btn.collapsed .panel-arrow {
+            transform: rotate(-180deg);
+        }
+
+        .panel-content {
+            max-height: 1000px;
+            overflow: visible;
+            transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+            opacity: 1;
+        }
+
+        .panel-content.collapsed {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+
+        .panel-section {
+            padding: 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .panel-section:last-child {
+            border-bottom: none;
+        }
+
+        .panel-section-title {
+            font-weight: bold;
+            font-size: 11px;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        /* Layer checkboxes */
+        .layer-checkbox-label {
+            display: flex;
+            align-items: center;
+            padding: 4px 0;
+            cursor: pointer;
+            font-size: 12px;
+            color: #333;
+        }
+
+        .layer-checkbox-label input[type="checkbox"] {
+            margin-right: 6px;
+            cursor: pointer;
+        }
+
+        .layer-checkbox-label:hover {
+            color: #2c5f2d;
+        }
+
+        /* ========================================
+           MAP NAVIGATION STYLES
+           ======================================== */
 
         .map-navigation-title {
             font-weight: bold;
@@ -623,10 +861,120 @@
             border-color: #2c5f2d;
         }
 
-        /* Tablet navigation styles */
+        /* Download section styles */
+        .download-title-wrapper {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            padding: 4px 0 8px 0;
+            font-weight: bold;
+            font-size: 11px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .download-title-wrapper:hover {
+            color: #2c5f2d;
+        }
+
+        .download-title-arrow {
+            font-size: 10px;
+            color: #999;
+            transition: transform 0.3s;
+        }
+
+        .download-title-arrow.collapsed {
+            transform: rotate(-90deg);
+        }
+
+        .download-buttons-container {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            max-height: 200px;
+            overflow: hidden;
+            opacity: 1;
+            transition: max-height 0.3s ease-out, opacity 0.3s ease-out, margin 0.3s ease-out;
+            margin-bottom: 4px;
+        }
+
+        .download-buttons-container.collapsed {
+            max-height: 0;
+            opacity: 0;
+            margin-bottom: 0;
+        }
+
+        .download-plan-btn {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: #f4f4f4;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            color: #333;
+            transition: all 0.2s;
+            width: 100%;
+        }
+
+        .download-plan-btn:hover {
+            background: #2c5f2d;
+            color: white;
+            border-color: #2c5f2d;
+        }
+
+        .download-plan-btn:hover .download-plan-info {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .download-plan-btn:active {
+            transform: scale(0.98);
+        }
+
+        .download-plan-info {
+            font-size: 11px;
+            color: #999;
+            transition: color 0.2s;
+        }
+
+        .download-all-btn {
+            background: #e8f5e9;
+            border-color: #2c5f2d;
+            font-weight: 500;
+        }
+
+        .download-all-btn:hover {
+            background: #2c5f2d;
+            color: white;
+        }
+
+        /* Tablet control panel styles */
         @media (max-width: 1024px) {
-            .map-navigation {
+            .leaflet-control-panel {
+                min-width: 180px;
+            }
+
+            .panel-toggle-btn {
+                padding: 7px 10px;
+                font-size: 11px;
+            }
+
+            .panel-section {
                 padding: 8px;
+            }
+
+            .panel-section-title {
+                font-size: 10px;
+                margin-bottom: 5px;
+            }
+
+            .layer-checkbox-label {
+                font-size: 11px;
             }
 
             .map-navigation-title {
@@ -638,12 +986,44 @@
                 padding: 5px 8px;
                 font-size: 10px;
             }
+
+            .download-title-wrapper {
+                font-size: 10px;
+                padding: 3px 0 6px 0;
+            }
+
+            .download-plan-btn {
+                padding: 7px 10px;
+                font-size: 11px;
+            }
+
+            .download-plan-info {
+                font-size: 10px;
+            }
         }
 
-        /* Mobile navigation styles */
+        /* Mobile control panel styles */
         @media (max-width: 768px) {
-            .map-navigation {
+            .leaflet-control-panel {
+                min-width: 160px;
+            }
+
+            .panel-toggle-btn {
+                padding: 6px 8px;
+                font-size: 10px;
+            }
+
+            .panel-section {
                 padding: 6px;
+            }
+
+            .panel-section-title {
+                font-size: 9px;
+                margin-bottom: 4px;
+            }
+
+            .layer-checkbox-label {
+                font-size: 10px;
             }
 
             .map-navigation-title {
@@ -653,6 +1033,20 @@
 
             .map-nav-btn {
                 padding: 4px 6px;
+                font-size: 9px;
+            }
+
+            .download-title-wrapper {
+                font-size: 9px;
+                padding: 3px 0 5px 0;
+            }
+
+            .download-plan-btn {
+                padding: 6px 8px;
+                font-size: 10px;
+            }
+
+            .download-plan-info {
                 font-size: 9px;
             }
         }
@@ -879,28 +1273,23 @@
            RESPONSIVE DESIGN
            ======================================== */
 
-        /* Medium screens */
-        @media (max-width: 1400px) {
-            #data-table th {
-                white-space: normal;
-                word-wrap: break-word;
-                overflow-wrap: break-word;
-                word-break: break-word;
+        /* Medium screens - reduce font size */
+        @media (max-width: 1200px) {
+            #data-table {
+                font-size: 12px;
             }
+        }
 
-            #data-table th:nth-child(1) { width: 4%; }   /* No. */
-            #data-table th:nth-child(2) { width: 7%; }   /* First name translit */
-            #data-table th:nth-child(3) { width: 7%; }   /* Last name translit */
-            #data-table th:nth-child(4) { width: 7%; }   /* Patronymic translit */
-            #data-table th:nth-child(5) { width: 7%; }   /* First name native */
-            #data-table th:nth-child(6) { width: 8%; }   /* Last name native */
-            #data-table th:nth-child(7) { width: 7%; }   /* Patronymic native */
-            #data-table th:nth-child(8) { width: 12%; }  /* Ethnic and religious affiliation */
-            #data-table th:nth-child(9) { width: 6%; }   /* Sex */
-            #data-table th:nth-child(10) { width: 6%; }  /* Length */
-            #data-table th:nth-child(11) { width: 5%; }  /* Width */
-            #data-table th:nth-child(12) { width: 8%; }  /* Plan part */
-            #data-table th:nth-child(13) { width: 16%; } /* Note */
+        @media (max-width: 800px) {
+            #data-table {
+                font-size: 11px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            #data-table {
+                font-size: 10px;
+            }
         }
 
         /* Tablets */
@@ -938,27 +1327,6 @@
                 padding: 18px 20px;
             }
 
-            /* Tablet column widths */
-            #data-table th {
-                white-space: normal;
-                word-wrap: break-word;
-                overflow-wrap: break-word;
-                word-break: break-word;
-            }
-
-            #data-table th:nth-child(1) { width: 5%; }   /* No. */
-            #data-table th:nth-child(2) { width: 7%; }   /* First name translit */
-            #data-table th:nth-child(3) { width: 7%; }   /* Last name translit */
-            #data-table th:nth-child(4) { width: 7%; }   /* Patronymic translit */
-            #data-table th:nth-child(5) { width: 7%; }   /* First name native */
-            #data-table th:nth-child(6) { width: 8%; }   /* Last name native */
-            #data-table th:nth-child(7) { width: 7%; }   /* Patronymic native */
-            #data-table th:nth-child(8) { width: 12%; }  /* Ethnic and religious affiliation */
-            #data-table th:nth-child(9) { width: 7%; }   /* Sex */
-            #data-table th:nth-child(10) { width: 7%; }  /* Length */
-            #data-table th:nth-child(11) { width: 6%; }  /* Width */
-            #data-table th:nth-child(12) { width: 9%; }  /* Plan part */
-            #data-table th:nth-child(13) { width: 11%; } /* Note */
         }
 
         /* Mobile */
@@ -991,6 +1359,24 @@
 
             #table-title {
                 font-size: 16px;
+            }
+
+            #table-header-controls {
+                gap: 6px;
+            }
+
+            #csv-download-toggle {
+                padding: 5px 10px;
+                font-size: 12px;
+            }
+
+            .download-menu {
+                min-width: 180px;
+            }
+
+            .download-menu-item {
+                padding: 8px 12px;
+                font-size: 12px;
             }
 
             #filters-toggle {
@@ -1032,36 +1418,14 @@
                 width: 100%;
             }
 
-            /* Mobile column widths - smaller font and adjusted proportions */
-            #data-table {
-                font-size: 11px;
-            }
-
+            /* Mobile - reduce padding */
             #data-table th {
                 padding: 6px 4px;
-                white-space: normal;
-                word-wrap: break-word;
-                overflow-wrap: break-word;
-                word-break: break-word;
             }
 
             #data-table td {
                 padding: 6px 4px;
             }
-
-            #data-table th:nth-child(1) { width: 6%; }   /* No. */
-            #data-table th:nth-child(2) { width: 7%; }   /* First name translit */
-            #data-table th:nth-child(3) { width: 8%; }   /* Last name translit */
-            #data-table th:nth-child(4) { width: 7%; }   /* Patronymic translit */
-            #data-table th:nth-child(5) { width: 7%; }   /* First name native */
-            #data-table th:nth-child(6) { width: 8%; }   /* Last name native */
-            #data-table th:nth-child(7) { width: 6%; }   /* Patronymic native */
-            #data-table th:nth-child(8) { width: 11%; }  /* Ethnic and religious affiliation */
-            #data-table th:nth-child(9) { width: 7%; }   /* Sex */
-            #data-table th:nth-child(10) { width: 7%; }  /* Length */
-            #data-table th:nth-child(11) { width: 6%; }  /* Width */
-            #data-table th:nth-child(12) { width: 10%; } /* Plan part */
-            #data-table th:nth-child(13) { width: 10%; } /* Note */
         }
     </style>
 </head>
@@ -1090,12 +1454,23 @@
             <div id="table-header">
                 <div id="table-header-top">
                     <h2 id="table-title">Land Plots</h2>
-                    <div id="filters-toggle">
-                        <span id="filters-toggle-text">
-                            Filters
-                            <span id="filters-active-badge"></span>
-                        </span>
-                        <span id="filters-toggle-icon" class="collapsed">▼</span>
+                    <div id="table-header-controls">
+                        <div id="csv-download">
+                            <div id="csv-download-toggle">
+                                <span>Download CSV</span>
+                            </div>
+                            <div id="csv-download-menu" class="download-menu">
+                                <div class="download-menu-item" data-csv-type="all">Download all data</div>
+                                <div class="download-menu-item" data-csv-type="filtered" id="csv-filtered-option" style="display: none;">Download filtered data (<span id="csv-filtered-count">0</span> records)</div>
+                            </div>
+                        </div>
+                        <div id="filters-toggle">
+                            <span id="filters-toggle-text">
+                                Filters
+                                <span id="filters-active-badge"></span>
+                            </span>
+                            <span id="filters-toggle-icon" class="collapsed">▼</span>
+                        </div>
                     </div>
                 </div>
 
@@ -1161,6 +1536,10 @@
                             </div>
                         </div>
                     </div>
+
+                    <div id="clear-all-filters-wrapper">
+                        <button id="clear-all-filters">Clear all filters</button>
+                    </div>
                 </div>
             </div>
 
@@ -1175,7 +1554,7 @@
                             <th data-sort="firstnamenative">First name<br>native</th>
                             <th data-sort="lastnamenative">Last name<br>native</th>
                             <th data-sort="patronymicnative">Patronymic<br>native</th>
-                            <th data-sort="religion">Ethnic and religious<br>affiliation</th>
+                            <th data-sort="religion">Ethnic and religious affiliation</th>
                             <th data-sort="sex">Sex</th>
                             <th data-sort="length">Length</th>
                             <th data-sort="width">Width</th>
@@ -1202,6 +1581,11 @@
 
     <!-- Leaflet TextPath Plugin -->
     <script src="https://cdn.jsdelivr.net/npm/leaflet-textpath@1.2.3/leaflet.textpath.min.js"></script>
+
+    <!-- JSZip for creating ZIP archives -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"
+            integrity="sha512-XMVd28F1oH/O71fzwBnV7HucLxVwtxf26XV8P4wPk26EDxuGZ91N8bsOttmnomcCD3CS5ZMRL50H0GgOHvegtg=="
+            crossorigin="anonymous"></script>
 
     <script>
         // ========================================
@@ -1385,8 +1769,6 @@
                 fetch('data/map2_labels.geojson').then(r => r.json())
             ])
             .then(([polygons1Data, polygons3Data, polygons2Data, labelsData, map2PolygonsData, map2LabelsData]) => {
-                console.log('✓ All files loaded');
-
                 // Tag each feature with its source layer for proper styling
                 polygons1Data.features.forEach(f => f.properties.source_layer = 'polygons1');
                 polygons2Data.features.forEach(f => f.properties.source_layer = 'polygons2');
@@ -1418,8 +1800,6 @@
                     ...polygons2Data.features,
                     ...polygons3Data.features
                 ];
-
-                console.log(`✓ Combined ${allFeatures.length} features: polygons1 (bottom) -> polygons2 -> polygons3 (top)`);
 
                 // Create combined GeoJSON object
                 const combinedGeoJSON = {
@@ -1523,8 +1903,6 @@
                     }
                 }).addTo(map);
 
-                console.log('✓ Combined layer created and added to map');
-
                 // ========================================
                 // CREATE STREET/SQUARE LABELS FOR MAP 1
                 // ========================================
@@ -1553,8 +1931,6 @@
                         streetLabelsGroup.addLayer(marker);
                     }
                 });
-
-                console.log('✓ Street labels created');
 
                 // ========================================
                 // CREATE MAP 2 LAYER
@@ -1632,8 +2008,6 @@
                     }
                 });
 
-                console.log('✓ Map 2 layer created');
-
                 // ========================================
                 // CREATE STREET/SQUARE LABELS FOR MAP 2
                 // ========================================
@@ -1663,26 +2037,19 @@
                     }
                 });
 
-                console.log('✓ Map 2 street labels created');
-
                 // Create group combining historical map, plot numbers, and street labels
                 const historicalMapGroup = L.layerGroup([combinedLayer, fieldLabelsGroup, streetLabelsGroup]).addTo(map);
                 const map2Group = L.layerGroup([map2Layer, map2LabelsGroup, map2StreetLabelsGroup]).addTo(map);
 
-                // Add layer control (both as checkboxes)
+                // Overlay maps for layer control
                 const overlayMaps = {
                     "OpenStreetMap": osmLayer,
                     "Restoration plan 1888": historicalMapGroup,
                     "Restoration plan 1891": map2Group
                 };
 
-                L.control.layers(null, overlayMaps, {
-                    collapsed: false,
-                    position: 'topright'
-                }).addTo(map);
-
                 // ========================================
-                // MAP NAVIGATION CONTROL
+                // COLLAPSIBLE CONTROL PANEL
                 // ========================================
 
                 // Define map centers and zoom levels
@@ -1690,33 +2057,190 @@
                 const map2Center = [54.161500, 27.235000]; // Map 2 center
                 const navigationZoom = 18;
 
-                // Create custom navigation control
-                const MapNavigationControl = L.Control.extend({
+                // Create collapsible control panel with all sections
+                const ControlPanel = L.Control.extend({
                     options: {
                         position: 'topright'
                     },
 
-                    onAdd: function(map) {
-                        const container = L.DomUtil.create('div', 'leaflet-bar map-navigation');
+                    onAdd: function(leafletMap) {
+                        const container = L.DomUtil.create('div', 'leaflet-control-panel');
 
-                        container.innerHTML = `
-                            <div class="map-navigation-title">Quick View:</div>
-                            <div class="map-navigation-buttons">
-                                <button class="map-nav-btn" data-view="map1">Plan 1888</button>
-                                <button class="map-nav-btn" data-view="map2">Plan 1891</button>
-                            </div>
-                        `;
+                        // Toggle button
+                        const toggleBtn = L.DomUtil.create('div', 'panel-toggle-btn', container);
+                        toggleBtn.innerHTML = '<span><span class="panel-icon">☰</span>Controls</span><span class="panel-arrow">▼</span>';
 
-                        // Prevent map interactions when clicking on navigation
-                        L.DomEvent.disableClickPropagation(container);
+                        // Content wrapper
+                        const content = L.DomUtil.create('div', 'panel-content', container);
+
+                        // Section 1: Layer Control
+                        const layerSection = this._createLayerSection(leafletMap, overlayMaps);
+                        content.appendChild(layerSection);
+
+                        // Section 2: Quick View
+                        const navSection = this._createNavigationSection(leafletMap);
+                        content.appendChild(navSection);
+
+                        // Section 3: Download GeoJSON
+                        const downloadSection = this._createDownloadSection();
+                        content.appendChild(downloadSection);
+
+                        // Toggle functionality
+                        toggleBtn.addEventListener('click', () => {
+                            content.classList.toggle('collapsed');
+                            toggleBtn.classList.toggle('collapsed');
+                        });
+
+                        // Prevent map interaction only for toggle button and content
+                        L.DomEvent.disableClickPropagation(toggleBtn);
                         L.DomEvent.disableScrollPropagation(container);
 
                         return container;
+                    },
+
+                    _createLayerSection: function(leafletMap, layers) {
+                        const section = L.DomUtil.create('div', 'panel-section');
+                        const title = L.DomUtil.create('div', 'panel-section-title', section);
+                        title.textContent = 'Layers';
+
+                        Object.keys(layers).forEach(name => {
+                            const label = L.DomUtil.create('label', 'layer-checkbox-label', section);
+
+                            const checkbox = L.DomUtil.create('input', '', label);
+                            checkbox.type = 'checkbox';
+                            checkbox.checked = leafletMap.hasLayer(layers[name]);
+
+                            const span = L.DomUtil.create('span', '', label);
+                            span.textContent = name;
+
+                            checkbox.addEventListener('change', () => {
+                                if (checkbox.checked) {
+                                    leafletMap.addLayer(layers[name]);
+                                } else {
+                                    leafletMap.removeLayer(layers[name]);
+                                }
+                            });
+                        });
+
+                        return section;
+                    },
+
+                    _createNavigationSection: function(leafletMap) {
+                        const section = L.DomUtil.create('div', 'panel-section');
+                        const title = L.DomUtil.create('div', 'panel-section-title', section);
+                        title.textContent = 'Quick View';
+
+                        const buttonsDiv = L.DomUtil.create('div', 'map-navigation-buttons', section);
+                        buttonsDiv.innerHTML = `
+                            <button class="map-nav-btn" data-view="map1">Plan 1888</button>
+                            <button class="map-nav-btn" data-view="map2">Plan 1891</button>
+                        `;
+
+                        return section;
+                    },
+
+                    _createDownloadSection: function() {
+                        const section = L.DomUtil.create('div', 'panel-section download-section');
+
+                        // Create clickable title with arrow
+                        const titleWrapper = L.DomUtil.create('div', 'download-title-wrapper', section);
+                        titleWrapper.innerHTML = '<span>Download GeoJSON</span><span class="download-title-arrow collapsed">▼</span>';
+
+                        // Create three simple buttons (collapsed by default)
+                        const buttonsContainer = L.DomUtil.create('div', 'download-buttons-container collapsed', section);
+
+                        const btn1888 = L.DomUtil.create('button', 'download-plan-btn', buttonsContainer);
+                        btn1888.innerHTML = '<span>Plan 1888</span><span class="download-plan-info">(4 files)</span>';
+                        btn1888.setAttribute('data-plan', '1888');
+
+                        const btn1891 = L.DomUtil.create('button', 'download-plan-btn', buttonsContainer);
+                        btn1891.innerHTML = '<span>Plan 1891</span><span class="download-plan-info">(2 files)</span>';
+                        btn1891.setAttribute('data-plan', '1891');
+
+                        const btnAll = L.DomUtil.create('button', 'download-plan-btn download-all-btn', buttonsContainer);
+                        btnAll.innerHTML = '<span>All Layers</span><span class="download-plan-info">(6 files)</span>';
+                        btnAll.setAttribute('data-plan', 'all');
+
+                        // Download function for plans
+                        const downloadPlanZip = async (plan) => {
+                            try {
+                                if (typeof JSZip === 'undefined') {
+                                    alert('JSZip library not loaded. Please refresh the page.');
+                                    return;
+                                }
+
+                                const zip = new JSZip();
+                                let files = [];
+                                let zipName = '';
+
+                                if (plan === '1888') {
+                                    files = [
+                                        'plan_1888_polygons.geojson',
+                                        'map1-buildings.geojson',
+                                        'map1-buildings2.geojson',
+                                        'map1-lables.geojson'
+                                    ];
+                                    zipName = 'radashkovichy_plan_1888';
+                                } else if (plan === '1891') {
+                                    files = [
+                                        'plan_1891_polygons.geojson',
+                                        'map2_labels.geojson'
+                                    ];
+                                    zipName = 'radashkovichy_plan_1891';
+                                } else if (plan === 'all') {
+                                    files = [
+                                        'plan_1888_polygons.geojson',
+                                        'map1-buildings.geojson',
+                                        'map1-buildings2.geojson',
+                                        'map1-lables.geojson',
+                                        'plan_1891_polygons.geojson',
+                                        'map2_labels.geojson'
+                                    ];
+                                    zipName = 'radashkovichy_all_layers';
+                                }
+
+                                const promises = files.map(async (file) => {
+                                    const response = await fetch(`data/${file}`);
+                                    const content = await response.text();
+                                    zip.file(file, content);
+                                });
+
+                                await Promise.all(promises);
+
+                                const blob = await zip.generateAsync({ type: 'blob' });
+                                const date = new Date().toISOString().split('T')[0];
+                                const link = document.createElement('a');
+                                link.href = URL.createObjectURL(blob);
+                                link.download = `${zipName}_${date}.zip`;
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                                URL.revokeObjectURL(link.href);
+                            } catch (error) {
+                                alert('Error creating ZIP file. Please try again.');
+                            }
+                        };
+
+                        // Add click handlers to buttons
+                        [btn1888, btn1891, btnAll].forEach(btn => {
+                            btn.addEventListener('click', () => {
+                                const plan = btn.getAttribute('data-plan');
+                                downloadPlanZip(plan);
+                            });
+                        });
+
+                        // Toggle buttons visibility
+                        titleWrapper.addEventListener('click', () => {
+                            buttonsContainer.classList.toggle('collapsed');
+                            titleWrapper.querySelector('.download-title-arrow').classList.toggle('collapsed');
+                        });
+
+                        return section;
                     }
                 });
 
-                const mapNavigation = new MapNavigationControl();
-                mapNavigation.addTo(map);
+                const controlPanel = new ControlPanel();
+                controlPanel.addTo(map);
 
                 // Add click handlers for navigation buttons
                 document.querySelectorAll('.map-nav-btn').forEach(btn => {
@@ -1879,7 +2403,6 @@
                 populateTable(allTableData);
             })
             .catch(error => {
-                console.error('Error loading layers:', error);
                 alert('Failed to load map data. Please check that files exist in the data/ folder.');
             });
 
@@ -1942,8 +2465,6 @@
                     tableBody.appendChild(row);
                     rowCount++;
                 });
-
-                console.log(`✓ Table populated: ${rowCount} entries`);
 
                 // Update header with count
                 document.getElementById('table-title').textContent =
@@ -2072,18 +2593,16 @@
                     const option = document.createElement('div');
                     option.className = 'multiselect-option';
 
+                    const label = document.createElement('label');
+
                     const checkbox = document.createElement('input');
                     checkbox.type = 'checkbox';
                     checkbox.value = planPart;
-                    checkbox.id = `planpart-${planPart}`;
 
-                    const label = document.createElement('label');
-                    label.textContent = planPart;
-                    label.htmlFor = `planpart-${planPart}`;
-                    label.style.cursor = 'pointer';
-                    label.style.flex = '1';
+                    const text = document.createTextNode(planPart);
 
-                    option.appendChild(checkbox);
+                    label.appendChild(checkbox);
+                    label.appendChild(text);
                     option.appendChild(label);
 
                     // Handle checkbox change
@@ -2164,18 +2683,16 @@
                     const option = document.createElement('div');
                     option.className = 'multiselect-option';
 
+                    const label = document.createElement('label');
+
                     const checkbox = document.createElement('input');
                     checkbox.type = 'checkbox';
                     checkbox.value = '__NO_DATA__';
-                    checkbox.id = 'religion-no-data';
 
-                    const label = document.createElement('label');
-                    label.textContent = 'No Data';
-                    label.htmlFor = 'religion-no-data';
-                    label.style.cursor = 'pointer';
-                    label.style.flex = '1';
+                    const text = document.createTextNode('No Data');
 
-                    option.appendChild(checkbox);
+                    label.appendChild(checkbox);
+                    label.appendChild(text);
                     option.appendChild(label);
 
                     checkbox.addEventListener('change', function() {
@@ -2196,18 +2713,16 @@
                     const option = document.createElement('div');
                     option.className = 'multiselect-option';
 
+                    const label = document.createElement('label');
+
                     const checkbox = document.createElement('input');
                     checkbox.type = 'checkbox';
                     checkbox.value = religion;
-                    checkbox.id = `religion-${religion}`;
 
-                    const label = document.createElement('label');
-                    label.textContent = religion;
-                    label.htmlFor = `religion-${religion}`;
-                    label.style.cursor = 'pointer';
-                    label.style.flex = '1';
+                    const text = document.createTextNode(religion);
 
-                    option.appendChild(checkbox);
+                    label.appendChild(checkbox);
+                    label.appendChild(text);
                     option.appendChild(label);
 
                     checkbox.addEventListener('change', function() {
@@ -2265,18 +2780,16 @@
                     const option = document.createElement('div');
                     option.className = 'multiselect-option';
 
+                    const label = document.createElement('label');
+
                     const checkbox = document.createElement('input');
                     checkbox.type = 'checkbox';
                     checkbox.value = sex;
-                    checkbox.id = `sex-${sex}`;
 
-                    const label = document.createElement('label');
-                    label.textContent = sex;
-                    label.htmlFor = `sex-${sex}`;
-                    label.style.cursor = 'pointer';
-                    label.style.flex = '1';
+                    const text = document.createTextNode(sex);
 
-                    option.appendChild(checkbox);
+                    label.appendChild(checkbox);
+                    label.appendChild(text);
                     option.appendChild(label);
 
                     checkbox.addEventListener('change', function() {
@@ -2297,18 +2810,16 @@
                     const option = document.createElement('div');
                     option.className = 'multiselect-option';
 
+                    const label = document.createElement('label');
+
                     const checkbox = document.createElement('input');
                     checkbox.type = 'checkbox';
                     checkbox.value = '__NO_DATA__';
-                    checkbox.id = 'sex-no-data';
 
-                    const label = document.createElement('label');
-                    label.textContent = 'Not Applicable';
-                    label.htmlFor = 'sex-no-data';
-                    label.style.cursor = 'pointer';
-                    label.style.flex = '1';
+                    const text = document.createTextNode('Not Applicable');
 
-                    option.appendChild(checkbox);
+                    label.appendChild(checkbox);
+                    label.appendChild(text);
                     option.appendChild(label);
 
                     checkbox.addEventListener('change', function() {
@@ -2506,6 +3017,14 @@
                 } else {
                     badge.classList.remove('show');
                 }
+
+                // Show/hide clear all filters button
+                const clearAllBtn = document.getElementById('clear-all-filters-wrapper');
+                if (activeCount > 0) {
+                    clearAllBtn.classList.add('show');
+                } else {
+                    clearAllBtn.classList.remove('show');
+                }
             }
 
             // Apply all filters (search + owner + plan part + map + religion + sex)
@@ -2645,6 +3164,9 @@
                 });
 
                 populateTable(filtered);
+
+                // Update CSV filtered option visibility
+                updateCSVFilteredOption();
             }
 
             // Deprecated: kept for compatibility
@@ -2748,6 +3270,45 @@
                 applyFilters();
             });
 
+            // Clear all filters
+            document.getElementById('clear-all-filters').addEventListener('click', function(e) {
+                e.stopPropagation();
+
+                // Clear text inputs
+                document.getElementById('search-input').value = '';
+                document.getElementById('filter-owner').value = '';
+
+                // Clear select
+                document.getElementById('filter-map').value = '';
+
+                // Clear all multiselect filters
+                selectedPlanParts.clear();
+                selectedReligions.clear();
+                selectedSexes.clear();
+
+                // Uncheck all checkboxes
+                document.querySelectorAll('#planpart-multiselect input[type="checkbox"]').forEach(cb => {
+                    cb.checked = false;
+                });
+                document.querySelectorAll('#religion-multiselect input[type="checkbox"]').forEach(cb => {
+                    cb.checked = false;
+                });
+                document.querySelectorAll('#sex-multiselect input[type="checkbox"]').forEach(cb => {
+                    cb.checked = false;
+                });
+
+                // Update multiselect displays
+                updatePlanPartDisplay();
+                updateReligionDisplay();
+                updateSexDisplay();
+
+                // Update clear button visibility for text inputs
+                updateClearButtonVisibility();
+
+                // Apply filters (will show all data)
+                applyFilters();
+            });
+
             // Add click handlers to table headers for sorting
             document.querySelectorAll('#data-table th[data-sort]').forEach(th => {
                 th.addEventListener('click', function() {
@@ -2758,6 +3319,139 @@
 
             // Initialize sort indicators
             updateSortIndicators();
+
+            // ========================================
+            // CSV DOWNLOAD
+            // ========================================
+
+            const csvDownloadToggle = document.getElementById('csv-download-toggle');
+            const csvDownloadMenu = document.getElementById('csv-download-menu');
+            const csvFilteredOption = document.getElementById('csv-filtered-option');
+            const csvFilteredCount = document.getElementById('csv-filtered-count');
+
+            // Toggle CSV dropdown menu
+            csvDownloadToggle.addEventListener('click', function(e) {
+                e.stopPropagation();
+                csvDownloadMenu.classList.toggle('show');
+            });
+
+            // Close CSV menu when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!csvDownloadToggle.contains(e.target) && !csvDownloadMenu.contains(e.target)) {
+                    csvDownloadMenu.classList.remove('show');
+                }
+            });
+
+            // CSV export function
+            function exportToCSV(data, filename) {
+                // Define headers matching table columns
+                const headers = [
+                    'No.',
+                    'First name translit',
+                    'Last name translit',
+                    'Patronymic translit',
+                    'First name native',
+                    'Last name native',
+                    'Patronymic native',
+                    'Ethnic and religious affiliation',
+                    'Sex',
+                    'Length',
+                    'Width',
+                    'Plan part',
+                    'Note'
+                ];
+
+                // Escape CSV value
+                const escapeCsv = (value) => {
+                    if (value === null || value === undefined) return '';
+                    const str = String(value);
+                    if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                        return `"${str.replace(/"/g, '""')}"`;
+                    }
+                    return str;
+                };
+
+                // Build CSV content
+                let csv = headers.join(',') + '\n';
+
+                data.forEach(feature => {
+                    const props = feature.properties;
+                    const isMap2 = props.source_layer === 'map2-polygons1';
+
+                    const row = [
+                        props['Field number'] || '',
+                        props['First name translit'] || '',
+                        props['Last name translit'] || '',
+                        props['Patronymic translit'] || '',
+                        props['First name native'] || '',
+                        props['Last name native'] || '',
+                        props['Patronymic native'] || '',
+                        props['Religion'] || '',
+                        props['Sex'] || '',
+                        (isMap2 ? props['Length of plot'] : props['Length of plots']) || '',
+                        (isMap2 ? props['Width of plot'] : props['Width of plots']) || '',
+                        (isMap2 ? props['Plan part'] : '') || '',
+                        props['Note'] || ''
+                    ].map(escapeCsv);
+
+                    csv += row.join(',') + '\n';
+                });
+
+                // Download file with BOM for Excel compatibility
+                const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = filename;
+                link.click();
+                URL.revokeObjectURL(link.href);
+            }
+
+            // Get current filtered data from table
+            function getCurrentFilteredData() {
+                const filtered = [];
+                document.querySelectorAll('#data-table tbody tr').forEach(row => {
+                    const fid = row.dataset.fid;
+                    const sourceLayer = row.dataset.sourceLayer;
+                    const feature = allTableData.find(f =>
+                        f.properties.fid == fid &&
+                        f.properties.source_layer === sourceLayer
+                    );
+                    if (feature) {
+                        filtered.push(feature);
+                    }
+                });
+                return filtered;
+            }
+
+            // Handle CSV menu item clicks
+            document.querySelectorAll('.download-menu-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const csvType = this.getAttribute('data-csv-type');
+                    const date = new Date().toISOString().split('T')[0];
+
+                    if (csvType === 'all') {
+                        exportToCSV(allTableData, `radashkovichy_all_${date}.csv`);
+                    } else if (csvType === 'filtered') {
+                        const filteredData = getCurrentFilteredData();
+                        exportToCSV(filteredData, `radashkovichy_filtered_${date}.csv`);
+                    }
+
+                    csvDownloadMenu.classList.remove('show');
+                });
+            });
+
+            // Update CSV filtered option visibility
+            function updateCSVFilteredOption() {
+                const filteredCount = document.querySelectorAll('#data-table tbody tr').length;
+                const totalCount = allTableData.length;
+
+                if (filteredCount < totalCount) {
+                    csvFilteredOption.style.display = 'block';
+                    csvFilteredCount.textContent = filteredCount;
+                } else {
+                    csvFilteredOption.style.display = 'none';
+                }
+            }
 
             // ========================================
             // FILTERS TOGGLE
@@ -2808,8 +3502,6 @@
                 metric: true,
                 position: 'bottomleft'
             }).addTo(map);
-
-            console.log('🗺️ Map initialized! Center:', mapCenter, 'Zoom:', initialZoom);
 
             // ========================================
             // SCROLL TO MAP BUTTON
