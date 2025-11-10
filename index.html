@@ -99,6 +99,7 @@
             background: #2c5f2d;
             color: white;
             padding: 0;
+            border-radius: 12px 12px 0 0;
         }
 
         #table-header-top {
@@ -457,6 +458,7 @@
             overflow-y: auto;
             overflow-x: auto;
             scroll-behavior: smooth;
+            border-radius: 0 0 12px 12px;
         }
 
         /* ========================================
@@ -493,7 +495,7 @@
         #data-table td:nth-child(7) { min-width: 60px; }   /* Patronymic native */
 
         #data-table th:nth-child(8),
-        #data-table td:nth-child(8) { min-width: 100px; }  /* Ethnic and religious affiliation */
+        #data-table td:nth-child(8) { min-width: 70px; }  /* Ethnic and religious affiliation */
 
         #data-table th:nth-child(9),
         #data-table td:nth-child(9) { min-width: 40px; }   /* Sex */
@@ -766,7 +768,7 @@
         }
 
         .panel-toggle-btn.collapsed .panel-arrow {
-            transform: rotate(-180deg);
+            transform: rotate(-90deg);
         }
 
         .panel-content {
@@ -1642,7 +1644,7 @@
                 let hasData = false;
 
                 // Determine field names based on source layer
-                const isMap2 = sourceLayer === 'map2-polygons1';
+                const isMap2 = sourceLayer === 'plan_1891_plots';
                 const lengthField = isMap2 ? 'Length of plot' : 'Length of plots';
                 const widthField = isMap2 ? 'Width of plot' : 'Width of plots';
 
@@ -1690,8 +1692,8 @@
                 const sourceLayer = feature.properties.source_layer;
                 const props = feature.properties;
 
-                // Land plots (polygons1)
-                if (sourceLayer === 'polygons1') {
+                // Plan 1888 - Land plots
+                if (sourceLayer === 'plan_1888_plots') {
                     return {
                         fillColor: props.fill_color || '#90EE90',
                         fillOpacity: props.fill_opacity || 0.8,
@@ -1701,8 +1703,8 @@
                     };
                 }
 
-                // Plot subdivisions (polygons2)
-                if (sourceLayer === 'polygons2') {
+                // Plan 1888 - Plot subdivisions
+                if (sourceLayer === 'plan_1888_plot_subdivisions') {
                     return {
                         fillColor: props.fill_color || '#FFB6C1',
                         fillOpacity: props.fill_opacity || 0.8,
@@ -1712,8 +1714,8 @@
                     };
                 }
 
-                // Buildings (polygons3)
-                if (sourceLayer === 'polygons3') {
+                // Plan 1888 - Buildings
+                if (sourceLayer === 'plan_1888_buildings') {
                     return {
                         fillColor: props.fill_color || '#FFD700',
                         fillOpacity: props.fill_opacity || 0.8,
@@ -1723,8 +1725,8 @@
                     };
                 }
 
-                // Map 2 land plots (map2-polygons1)
-                if (sourceLayer === 'map2-polygons1') {
+                // Plan 1891 - Land plots
+                if (sourceLayer === 'plan_1891_plots') {
                     return {
                         fillColor: props.fill_color || '#90EE90',
                         fillOpacity: props.fill_opacity || 0.8,
@@ -1761,44 +1763,43 @@
 
             // Load all GeoJSON files in parallel
             Promise.all([
-                fetch('data/plan_1888_polygons.geojson').then(r => r.json()),
-                fetch('data/map1-buildings.geojson').then(r => r.json()),
-                fetch('data/map1-buildings2.geojson').then(r => r.json()),
-                fetch('data/map1-lables.geojson').then(r => r.json()),
-                fetch('data/plan_1891_polygons.geojson').then(r => r.json()),
-                fetch('data/map2_labels.geojson').then(r => r.json())
+                fetch('data/plan_1888_plots.geojson').then(r => {
+                    if (!r.ok) throw new Error(`Failed to load plan_1888_plots.geojson: ${r.status}`);
+                    return r.json();
+                }),
+                fetch('data/plan_1888_plot_subdivisions.geojson').then(r => {
+                    if (!r.ok) throw new Error(`Failed to load plan_1888_plot_subdivisions.geojson: ${r.status}`);
+                    return r.json();
+                }),
+                fetch('data/plan_1888_buildings.geojson').then(r => {
+                    if (!r.ok) throw new Error(`Failed to load plan_1888_buildings.geojson: ${r.status}`);
+                    return r.json();
+                }),
+                fetch('data/plan_1888_labels.geojson').then(r => {
+                    if (!r.ok) throw new Error(`Failed to load plan_1888_labels.geojson: ${r.status}`);
+                    return r.json();
+                }),
+                fetch('data/plan_1891_plots.geojson').then(r => {
+                    if (!r.ok) throw new Error(`Failed to load plan_1891_plots.geojson: ${r.status}`);
+                    return r.json();
+                }),
+                fetch('data/plan_1891_labels.geojson').then(r => {
+                    if (!r.ok) throw new Error(`Failed to load plan_1891_labels.geojson: ${r.status}`);
+                    return r.json();
+                })
             ])
-            .then(([polygons1Data, polygons3Data, polygons2Data, labelsData, map2PolygonsData, map2LabelsData]) => {
+            .then(([plan1888PlotsData, plan1888SubdivisionsData, plan1888BuildingsData, plan1888LabelsData, plan1891PlotsData, plan1891LabelsData]) => {
                 // Tag each feature with its source layer for proper styling
-                polygons1Data.features.forEach(f => f.properties.source_layer = 'polygons1');
-                polygons2Data.features.forEach(f => f.properties.source_layer = 'polygons2');
-                polygons3Data.features.forEach(f => f.properties.source_layer = 'polygons3');
-                map2PolygonsData.features.forEach(f => f.properties.source_layer = 'map2-polygons1');
+                plan1888PlotsData.features.forEach(f => f.properties.source_layer = 'plan_1888_plots');
+                plan1888SubdivisionsData.features.forEach(f => f.properties.source_layer = 'plan_1888_plot_subdivisions');
+                plan1888BuildingsData.features.forEach(f => f.properties.source_layer = 'plan_1888_buildings');
+                plan1891PlotsData.features.forEach(f => f.properties.source_layer = 'plan_1891_plots');
 
-                // Sort each layer type by layer_order (reverse: high to low)
-                polygons1Data.features.sort((a, b) => {
-                    const orderA = a.properties.layer_order !== undefined ? a.properties.layer_order : -Infinity;
-                    const orderB = b.properties.layer_order !== undefined ? b.properties.layer_order : -Infinity;
-                    return orderB - orderA;
-                });
-
-                polygons2Data.features.sort((a, b) => {
-                    const orderA = a.properties.layer_order !== undefined ? a.properties.layer_order : -Infinity;
-                    const orderB = b.properties.layer_order !== undefined ? b.properties.layer_order : -Infinity;
-                    return orderB - orderA;
-                });
-
-                polygons3Data.features.sort((a, b) => {
-                    const orderA = a.properties.layer_order !== undefined ? a.properties.layer_order : -Infinity;
-                    const orderB = b.properties.layer_order !== undefined ? b.properties.layer_order : -Infinity;
-                    return orderB - orderA;
-                });
-
-                // Combine features: polygons1 first (bottom), then polygons2, then polygons3 (top)
+                // Combine features: plots first (bottom), then subdivisions, then buildings (top)
                 const allFeatures = [
-                    ...polygons1Data.features,
-                    ...polygons2Data.features,
-                    ...polygons3Data.features
+                    ...plan1888PlotsData.features,
+                    ...plan1888SubdivisionsData.features,
+                    ...plan1888BuildingsData.features
                 ];
 
                 // Create combined GeoJSON object
@@ -1818,7 +1819,7 @@
                         const sourceLayer = props.source_layer;
 
                         // Configure popups and interactions for land plots
-                        if (sourceLayer === 'polygons1') {
+                        if (sourceLayer === 'plan_1888_plots') {
                             // Create popup content using shared function
                             const popupContent = createPopupContent(props, sourceLayer);
 
@@ -1833,7 +1834,7 @@
                                         row.classList.remove('selected');
                                     });
                                     document.querySelectorAll('#data-table tbody tr').forEach(row => {
-                                        if (row.dataset.fid == props.fid) {
+                                        if (row.dataset.fid == props.fid && row.dataset.sourceLayer == props.source_layer) {
                                             row.classList.add('selected');
                                             // Scroll row to top only if clicked on map (not from table)
                                             if (!openedFromTableClick) {
@@ -1882,14 +1883,14 @@
                         }
 
                         // Buildings and subdivisions: show popup from underlying land plot
-                        if (sourceLayer === 'polygons2' || sourceLayer === 'polygons3') {
+                        if (sourceLayer === 'plan_1888_plot_subdivisions' || sourceLayer === 'plan_1888_buildings') {
                             layer.on('click', function(e) {
                                 const clickedPoint = e.latlng;
 
-                                // Find land plot (polygons1) under the clicked point
+                                // Find land plot under the clicked point
                                 combinedLayer.eachLayer(function(l) {
                                     if (l.feature &&
-                                        l.feature.properties.source_layer === 'polygons1' &&
+                                        l.feature.properties.source_layer === 'plan_1888_plots' &&
                                         l.getBounds &&
                                         l.getBounds().contains(clickedPoint)) {
 
@@ -1904,10 +1905,10 @@
                 }).addTo(map);
 
                 // ========================================
-                // CREATE STREET/SQUARE LABELS FOR MAP 1
+                // CREATE STREET/SQUARE LABELS FOR MAP 1 (Plan 1888)
                 // ========================================
 
-                labelsData.features.forEach(feature => {
+                plan1888LabelsData.features.forEach(feature => {
                     const props = feature.properties;
                     const coords = feature.geometry.coordinates;
 
@@ -1933,17 +1934,17 @@
                 });
 
                 // ========================================
-                // CREATE MAP 2 LAYER
+                // CREATE MAP 2 LAYER (Plan 1891)
                 // ========================================
 
-                map2Layer = L.geoJSON(map2PolygonsData, {
+                map2Layer = L.geoJSON(plan1891PlotsData, {
                     style: getFeatureStyle,
                     onEachFeature: function(feature, layer) {
                         const props = feature.properties;
                         const sourceLayer = props.source_layer;
 
-                        // Configure popups and interactions for map2 land plots
-                        if (sourceLayer === 'map2-polygons1') {
+                        // Configure popups and interactions for plan 1891 land plots
+                        if (sourceLayer === 'plan_1891_plots') {
                             // Create popup content using shared function
                             const popupContent = createPopupContent(props, sourceLayer);
 
@@ -1958,7 +1959,7 @@
                                         row.classList.remove('selected');
                                     });
                                     document.querySelectorAll('#data-table tbody tr').forEach(row => {
-                                        if (row.dataset.fid == props.fid) {
+                                        if (row.dataset.fid == props.fid && row.dataset.sourceLayer == props.source_layer) {
                                             row.classList.add('selected');
                                             // Scroll row to top only if clicked on map (not from table)
                                             if (!openedFromTableClick) {
@@ -2009,10 +2010,10 @@
                 });
 
                 // ========================================
-                // CREATE STREET/SQUARE LABELS FOR MAP 2
+                // CREATE STREET/SQUARE LABELS FOR MAP 2 (Plan 1891)
                 // ========================================
 
-                map2LabelsData.features.forEach(feature => {
+                plan1891LabelsData.features.forEach(feature => {
                     const props = feature.properties;
                     const coords = feature.geometry.coordinates;
 
@@ -2175,26 +2176,26 @@
 
                                 if (plan === '1888') {
                                     files = [
-                                        'plan_1888_polygons.geojson',
-                                        'map1-buildings.geojson',
-                                        'map1-buildings2.geojson',
-                                        'map1-lables.geojson'
+                                        'plan_1888_plots.geojson',
+                                        'plan_1888_plot_subdivisions.geojson',
+                                        'plan_1888_buildings.geojson',
+                                        'plan_1888_labels.geojson'
                                     ];
                                     zipName = 'radashkovichy_plan_1888';
                                 } else if (plan === '1891') {
                                     files = [
-                                        'plan_1891_polygons.geojson',
-                                        'map2_labels.geojson'
+                                        'plan_1891_plots.geojson',
+                                        'plan_1891_labels.geojson'
                                     ];
                                     zipName = 'radashkovichy_plan_1891';
                                 } else if (plan === 'all') {
                                     files = [
-                                        'plan_1888_polygons.geojson',
-                                        'map1-buildings.geojson',
-                                        'map1-buildings2.geojson',
-                                        'map1-lables.geojson',
-                                        'plan_1891_polygons.geojson',
-                                        'map2_labels.geojson'
+                                        'plan_1888_plots.geojson',
+                                        'plan_1888_plot_subdivisions.geojson',
+                                        'plan_1888_buildings.geojson',
+                                        'plan_1888_labels.geojson',
+                                        'plan_1891_plots.geojson',
+                                        'plan_1891_labels.geojson'
                                     ];
                                     zipName = 'radashkovichy_all_layers';
                                 }
@@ -2399,11 +2400,12 @@
                 // POPULATE TABLE
                 // ========================================
 
-                saveTableData(allFeatures, map2PolygonsData.features);
+                saveTableData(allFeatures, plan1891PlotsData.features);
                 populateTable(allTableData);
             })
             .catch(error => {
-                alert('Failed to load map data. Please check that files exist in the data/ folder.');
+                console.error('Error loading map data:', error);
+                alert('Failed to load map data. Please check that files exist in the data/ folder.\n\nError: ' + error.message);
             });
 
             // ========================================
@@ -2419,7 +2421,7 @@
 
                 features.forEach((feature, index) => {
                     const props = feature.properties;
-                    const isMap2 = props.source_layer === 'map2-polygons1';
+                    const isMap2 = props.source_layer === 'plan_1891_plots';
 
                     const row = document.createElement('tr');
                     row.dataset.featureIndex = index;
@@ -2467,8 +2469,9 @@
                 });
 
                 // Update header with count
+                const recordLabel = rowCount === 1 ? 'record' : 'records';
                 document.getElementById('table-title').textContent =
-                    `Land Plots (${rowCount})`;
+                    `Land Plots (${rowCount} ${recordLabel})`;
             }
 
             // Flag to track if popup was opened from table row click
@@ -2499,14 +2502,14 @@
 
                 // Highlight selected row (but don't scroll yet)
                 document.querySelectorAll('#data-table tbody tr').forEach(row => {
-                    if (row.dataset.fid == fid) {
+                    if (row.dataset.fid == fid && row.dataset.sourceLayer == sourceLayer) {
                         row.classList.add('selected');
                     }
                 });
 
                 // Determine which layer to search based on sourceLayer
-                const targetLayer = sourceLayer === 'map2-polygons1' ? map2Layer : combinedLayer;
-                const targetSourceLayer = sourceLayer === 'map2-polygons1' ? 'map2-polygons1' : 'polygons1';
+                const targetLayer = sourceLayer === 'plan_1891_plots' ? map2Layer : combinedLayer;
+                const targetSourceLayer = sourceLayer === 'plan_1891_plots' ? 'plan_1891_plots' : 'plan_1888_plots';
 
                 if (!targetLayer) return;
 
@@ -2543,18 +2546,18 @@
             let currentSortDirection = 'asc'; // ascending
 
             // Save data for search and sort
-            function saveTableData(features, map2Features) {
-                // Filter map1 features (polygons1)
-                const map1Data = features.filter(feature => {
+            function saveTableData(features, plan1891Features) {
+                // Filter plan 1888 features (only plots, not buildings/subdivisions)
+                const plan1888Data = features.filter(feature => {
                     const sourceLayer = feature.properties.source_layer;
-                    return sourceLayer === 'polygons1';
+                    return sourceLayer === 'plan_1888_plots';
                 });
 
-                // Include all map2 features
-                const map2Data = map2Features;
+                // Include all plan 1891 features
+                const plan1891Data = plan1891Features;
 
                 // Combine both datasets
-                allTableData = [...map1Data, ...map2Data];
+                allTableData = [...plan1888Data, ...plan1891Data];
 
                 // Populate filter options
                 populatePlanPartFilter();
@@ -2577,7 +2580,7 @@
                 // Collect unique Plan part values from map2 data
                 allTableData.forEach(feature => {
                     const props = feature.properties;
-                    const isMap2 = props.source_layer === 'map2-polygons1';
+                    const isMap2 = props.source_layer === 'plan_1891_plots';
 
                     if (isMap2 && props['Plan part']) {
                         uniquePlanParts.add(props['Plan part']);
@@ -2859,8 +2862,8 @@
                     let valueA, valueB;
                     const propsA = a.properties;
                     const propsB = b.properties;
-                    const isMap2A = propsA.source_layer === 'map2-polygons1';
-                    const isMap2B = propsB.source_layer === 'map2-polygons1';
+                    const isMap2A = propsA.source_layer === 'plan_1891_plots';
+                    const isMap2B = propsB.source_layer === 'plan_1891_plots';
 
                     switch(column) {
                         case 'number':
@@ -2939,8 +2942,8 @@
                 allTableData.sort((a, b) => {
                     const propsA = a.properties;
                     const propsB = b.properties;
-                    const isMap2A = propsA.source_layer === 'map2-polygons1';
-                    const isMap2B = propsB.source_layer === 'map2-polygons1';
+                    const isMap2A = propsA.source_layer === 'plan_1891_plots';
+                    const isMap2B = propsB.source_layer === 'plan_1891_plots';
 
                     // First, sort by plan (1888 before 1891)
                     if (!isMap2A && isMap2B) return -1; // plan 1888 before plan 1891
@@ -3043,7 +3046,7 @@
                 // Filter data
                 const filtered = allTableData.filter(feature => {
                     const props = feature.properties;
-                    const isMap2 = props.source_layer === 'map2-polygons1';
+                    const isMap2 = props.source_layer === 'plan_1891_plots';
 
                     // Filter by map number
                     if (mapFilter !== '') {
@@ -3126,6 +3129,10 @@
                         // Check Note
                         const note = String(props['Note'] || '').toLowerCase();
                         if (note.includes(searchTerm)) matchesSearch = true;
+
+                        // Check Note native
+                        const noteNative = String(props['Note native'] || '').toLowerCase();
+                        if (noteNative.includes(searchTerm)) matchesSearch = true;
 
                         if (!matchesSearch) return false;
                     }
@@ -3344,22 +3351,21 @@
 
             // CSV export function
             function exportToCSV(data, filename) {
-                // Define headers matching table columns
-                const headers = [
-                    'No.',
-                    'First name translit',
-                    'Last name translit',
-                    'Patronymic translit',
-                    'First name native',
-                    'Last name native',
-                    'Patronymic native',
-                    'Ethnic and religious affiliation',
-                    'Sex',
-                    'Length',
-                    'Width',
-                    'Plan part',
-                    'Note'
-                ];
+                // Collect all unique property keys from all features
+                const allKeys = new Set();
+                data.forEach(feature => {
+                    if (feature.properties) {
+                        Object.keys(feature.properties).forEach(key => {
+                            // Skip internal/technical properties
+                            if (key !== 'source_layer' && key !== 'Layer order' && key !== 'fid') {
+                                allKeys.add(key);
+                            }
+                        });
+                    }
+                });
+
+                // Convert to array preserving original GeoJSON property order
+                const headers = ['Plan year', ...Array.from(allKeys)];
 
                 // Escape CSV value
                 const escapeCsv = (value) => {
@@ -3372,27 +3378,20 @@
                 };
 
                 // Build CSV content
-                let csv = headers.join(',') + '\n';
+                let csv = headers.map(escapeCsv).join(',') + '\n';
 
                 data.forEach(feature => {
-                    const props = feature.properties;
-                    const isMap2 = props.source_layer === 'map2-polygons1';
+                    const props = feature.properties || {};
 
-                    const row = [
-                        props['Field number'] || '',
-                        props['First name translit'] || '',
-                        props['Last name translit'] || '',
-                        props['Patronymic translit'] || '',
-                        props['First name native'] || '',
-                        props['Last name native'] || '',
-                        props['Patronymic native'] || '',
-                        props['Religion'] || '',
-                        props['Sex'] || '',
-                        (isMap2 ? props['Length of plot'] : props['Length of plots']) || '',
-                        (isMap2 ? props['Width of plot'] : props['Width of plots']) || '',
-                        (isMap2 ? props['Plan part'] : '') || '',
-                        props['Note'] || ''
-                    ].map(escapeCsv);
+                    // Determine plan year from source_layer
+                    const planYear = props.source_layer === 'plan_1888_plots' ? '1888' : '1891';
+
+                    const row = headers.map(header => {
+                        if (header === 'Plan year') {
+                            return escapeCsv(planYear);
+                        }
+                        return escapeCsv(props[header] || '');
+                    });
 
                     csv += row.join(',') + '\n';
                 });
