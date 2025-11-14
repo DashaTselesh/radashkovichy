@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Radashkovichy Restoration Plans 1888-1891</title>
+    <title>Mapping for local history projects: from archival document to user model</title>
     
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"
@@ -47,8 +47,17 @@
             font-size: 28px;
             font-weight: bold;
             color: #2c5f2d;
-            margin: 0 0 20px 0;
+            margin: 0 0 10px 0;
             line-height: 1.4;
+            text-align: center;
+        }
+
+        #page-subtitle {
+            font-size: 20px;
+            font-weight: normal;
+            color: #555;
+            line-height: 1.4;
+            text-align: center;
         }
 
         #page-description {
@@ -1441,10 +1450,8 @@
     </button>
 
     <header id="page-header">
-        <h1 id="page-title">Plans for the restoration of Radashkovichy after the fires of 1888 and 1891:<br>indicating land plots and owners</h1>
-        <div id="page-description">
-            <!-- Description text will be added here -->
-        </div>
+        <h1 id="page-title">Mapping for local history projects: from archival document to user model</h1>
+        <h2 id="page-subtitle">Plans for the restoration of Radashkovichy after the fires of 1888 and 1891: indicating land plots and owners</h2>
     </header>
 
     <div id="container">
@@ -3545,15 +3552,20 @@
     <footer>
         <div class="footer-content">
             <div class="footer-section">
-                Radashkovichy Restoration Plans 1888-1891
+                This research has received funding from the Economic Recovery and Resilience Plan "New Generation Lithuania" under grant agreement No. 10-036-T-0006.
             </div>
             <div class="footer-section">
-                Historical Map Visualization Project
+                Contact: <a href="mailto:test_radashkovichy@gmail.com">test_radashkovichy@gmail.com</a>
             </div>
             <div class="footer-section">
-                &copy; 2025 | Data: Historical Archives
+                &copy; <span id="current-year"></span>
             </div>
         </div>
     </footer>
+
+    <script>
+        // Set current year dynamically
+        document.getElementById('current-year').textContent = new Date().getFullYear();
+    </script>
 </body>
 </html>
