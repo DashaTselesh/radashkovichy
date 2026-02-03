@@ -605,7 +605,10 @@
            ======================================== */
 
         /* Plot Number Labels */
-        .field-label {
+        /* Use higher specificity selector (element + 2 classes = 0,2,1) to override Leaflet's
+           default .leaflet-marker-icon selector (1 class = 0,1,0) without !important */
+        div.leaflet-marker-icon.field-label,
+        div.leaflet-marker-icon.field-label-hidden {
             background: transparent;
             border: none;
             padding: 2px 4px;
@@ -613,13 +616,13 @@
             font-weight: bold;
             color: #2c5f2d;
             text-align: center;
-            pointer-events: none;
+            pointer-events: none; /* Allow hover events to pass through to polygons below */
             transition: opacity 0.3s;
             white-space: nowrap;
             overflow: visible;
         }
 
-        .field-label-hidden {
+        div.leaflet-marker-icon.field-label-hidden {
             opacity: 0;
         }
 
@@ -1691,6 +1694,149 @@
             }
 
             // ========================================
+            // POPUP AND INTERACTION HELPERS
+            // ========================================
+
+            /**
+             * Setup popup event handlers for land plot layers
+             * Handles table row synchronization and style changes on popup open/close
+             *
+             * @param {L.Layer} layer - The Leaflet layer to attach events to
+             * @param {L.GeoJSON} parentLayer - The parent GeoJSON layer (for resetStyle)
+             * @param {Object} props - Feature properties (for table row matching)
+             * @param {Object} feature - The GeoJSON feature (for restoring original style)
+             */
+            function setupPopupEventHandlers(layer, parentLayer, props, feature) {
+                // Add event listener for when popup opens
+                layer.on('popupopen', function() {
+                    // Change fill color when popup opens
+                    layer.setStyle({fillColor: '#ffffcc', weight: 3});
+
+                    // Highlight corresponding row in table
+                    document.querySelectorAll('#data-table tbody tr.selected').forEach(row => {
+                        row.classList.remove('selected');
+                    });
+                    document.querySelectorAll('#data-table tbody tr').forEach(row => {
+                        if (row.dataset.fid == props.fid && row.dataset.sourceLayer == props.source_layer) {
+                            row.classList.add('selected');
+                            // Scroll row to top only if clicked on map (not from table)
+                            if (!openedFromTableClick) {
+                                scrollRowIntoView(row);
+                            }
+                        }
+                    });
+                });
+
+                // Add event listener for when popup closes
+                layer.on('popupclose', function() {
+                    // Clear table row selection
+                    document.querySelectorAll('#data-table tbody tr.selected').forEach(row => {
+                        row.classList.remove('selected');
+                    });
+
+                    // Restore original style manually (avoid resetStyle which kills events)
+                    const originalStyle = getFeatureStyle(feature);
+                    layer.setStyle(originalStyle);
+                });
+            }
+
+            /**
+             * Setup hover effects for land plot layers
+             * Increases weight and opacity on mouseover, resets on mouseout
+             *
+             * @param {L.Layer} layer - The Leaflet layer
+             * @param {L.GeoJSON} parentLayer - Parent layer (unused, kept for compatibility)
+             * @param {Object} feature - The GeoJSON feature (for restoring original style)
+             */
+            function setupHoverEffects(layer, parentLayer, feature) {
+                layer.on('mouseover', function() {
+                    // Don't change style if popup is open (highlighted state takes priority)
+                    if (!layer.getPopup() || !layer.getPopup().isOpen()) {
+                        layer.setStyle({weight: 4, fillOpacity: 0.9});
+                    }
+                });
+                layer.on('mouseout', function() {
+                    // Don't reset style if popup is open (keep highlighted state)
+                    if (!layer.getPopup() || !layer.getPopup().isOpen()) {
+                        const originalStyle = getFeatureStyle(feature);
+                        layer.setStyle(originalStyle);
+                    }
+                });
+            }
+
+            /**
+             * Create field number marker with click handler
+             * Creates a marker at the polygon center that opens the parent polygon's popup
+             *
+             * @param {L.Layer} layer - The polygon layer
+             * @param {Object} props - Feature properties (contains 'Field number')
+             * @param {L.LayerGroup} labelGroup - Target marker group to add marker to
+             * @param {number} minZoomForLabels - Zoom threshold for label visibility
+             * @param {L.Map} map - Leaflet map instance
+             * @returns {L.Marker|null} The created marker or null if no field number
+             */
+            function createFieldNumberMarker(layer, props, labelGroup, minZoomForLabels, map) {
+                if (!props['Field number']) {
+                    return null;
+                }
+
+                const center = layer.getBounds().getCenter();
+
+                // Check current zoom to set initial visibility
+                const currentZoom = map.getZoom();
+                const initialClass = currentZoom >= minZoomForLabels ? 'field-label' : 'field-label field-label-hidden';
+
+                const marker = L.marker(center, {
+                    icon: L.divIcon({
+                        className: initialClass,
+                        html: props['Field number'],
+                        iconSize: [30, 20],
+                        iconAnchor: [15, 10]
+                    }),
+                    bubblingMouseEvents: false
+                });
+
+                // Click on marker opens popup from parent polygon
+                marker.on('click', function(e) {
+                    if (layer.getPopup()) {
+                        layer.openPopup(e.latlng);
+                    }
+                });
+
+                // Add marker to label group
+                labelGroup.addLayer(marker);
+
+                return marker;
+            }
+
+            /**
+             * Setup building click-through to underlying plot
+             * Makes buildings/subdivisions transparent to clicks - opens the underlying plot's popup
+             *
+             * @param {L.Layer} layer - The building/subdivision layer
+             * @param {L.GeoJSON} parentLayer - Layer to search for underlying plots
+             * @param {string} plotSourceLayerName - Source layer identifier for plots (e.g., 'plan_1888_plots')
+             */
+            function setupBuildingClickThrough(layer, parentLayer, plotSourceLayerName) {
+                layer.on('click', function(e) {
+                    const clickedPoint = e.latlng;
+
+                    // Find land plot under the clicked point
+                    parentLayer.eachLayer(function(l) {
+                        if (l.feature &&
+                            l.feature.properties.source_layer === plotSourceLayerName &&
+                            l.getBounds &&
+                            l.getBounds().contains(clickedPoint)) {
+
+                            if (l.getPopup()) {
+                                l.openPopup(clickedPoint);
+                            }
+                        }
+                    });
+                });
+            }
+
+            // ========================================
             // LAYER STYLING FUNCTIONS
             // ========================================
 
@@ -1757,7 +1903,10 @@
             // GLOBAL LAYER VARIABLES
             // ========================================
 
-            let combinedLayer; // Combined GeoJSON layer with all features
+            let combinedLayer; // Combined GeoJSON layer with all features (deprecated - use plotsLayer)
+            let plotsLayer; // Plan 1888 land plots layer (interactive)
+            let subdivisionsLayer; // Plan 1888 plot subdivisions layer (non-interactive)
+            let buildingsLayer; // Plan 1888 buildings layer (non-interactive)
             let map2Layer; // Map 2 GeoJSON layer
             let fieldLabelsGroup = L.layerGroup(); // Group for plot number markers for map1
             let map2LabelsGroup = L.layerGroup(); // Group for plot number markers for map2
@@ -1802,114 +1951,56 @@
                 plan1888BuildingsData.features.forEach(f => f.properties.source_layer = 'plan_1888_buildings');
                 plan1891PlotsData.features.forEach(f => f.properties.source_layer = 'plan_1891_plots');
 
-                // Combine features: plots first (bottom), then subdivisions, then buildings (top)
+                // Combine all Plan 1888 features for table data (used by saveTableData function)
                 const allFeatures = [
                     ...plan1888PlotsData.features,
                     ...plan1888SubdivisionsData.features,
                     ...plan1888BuildingsData.features
                 ];
 
-                // Create combined GeoJSON object
-                const combinedGeoJSON = {
-                    type: 'FeatureCollection',
-                    features: allFeatures
-                };
-
                 // ========================================
-                // CREATE COMBINED LAYER
+                // CREATE SEPARATE LAYERS FOR PROPER INTERACTION
                 // ========================================
 
-                combinedLayer = L.geoJSON(combinedGeoJSON, {
+                // Layer 1: Land plots (interactive - bottom layer)
+                plotsLayer = L.geoJSON(plan1888PlotsData, {
                     style: getFeatureStyle,
                     onEachFeature: function(feature, layer) {
                         const props = feature.properties;
                         const sourceLayer = props.source_layer;
 
                         // Configure popups and interactions for land plots
-                        if (sourceLayer === 'plan_1888_plots') {
-                            // Create popup content using shared function
-                            const popupContent = createPopupContent(props, sourceLayer);
+                        // Create popup content using shared function
+                        const popupContent = createPopupContent(props, sourceLayer);
 
-                            // Bind popup only if there is data
-                            if (popupContent) {
-                                layer.bindPopup(popupContent);
-
-                                // Add event listener for when popup opens
-                                layer.on('popupopen', function() {
-                                    // Highlight corresponding row in table
-                                    document.querySelectorAll('#data-table tbody tr.selected').forEach(row => {
-                                        row.classList.remove('selected');
-                                    });
-                                    document.querySelectorAll('#data-table tbody tr').forEach(row => {
-                                        if (row.dataset.fid == props.fid && row.dataset.sourceLayer == props.source_layer) {
-                                            row.classList.add('selected');
-                                            // Scroll row to top only if clicked on map (not from table)
-                                            if (!openedFromTableClick) {
-                                                scrollRowIntoView(row);
-                                            }
-                                        }
-                                    });
-                                });
-                            }
-
-                            // Create plot number marker
-                            if (props['Field number']) {
-                                const center = layer.getBounds().getCenter();
-
-                                // Check current zoom to set initial visibility
-                                const currentZoom = map.getZoom();
-                                const initialClass = currentZoom >= minZoomForLabels ? 'field-label' : 'field-label field-label-hidden';
-
-                                const marker = L.marker(center, {
-                                    icon: L.divIcon({
-                                        className: initialClass,
-                                        html: props['Field number'],
-                                        iconSize: [30, 20],
-                                        iconAnchor: [15, 10]
-                                    })
-                                });
-
-                                // Click on marker opens popup from parent polygon
-                                marker.on('click', function(e) {
-                                    if (layer.getPopup()) {
-                                        layer.openPopup(e.latlng);
-                                    }
-                                });
-
-                                // Add marker to plot numbers group
-                                fieldLabelsGroup.addLayer(marker);
-                            }
-
-                            // Hover effects for land plots
-                            layer.on('mouseover', function() {
-                                layer.setStyle({weight: 4, fillOpacity: 0.9});
-                            });
-                            layer.on('mouseout', function() {
-                                combinedLayer.resetStyle(layer);
-                            });
+                        // Bind popup only if there is data
+                        if (popupContent) {
+                            layer.bindPopup(popupContent);
+                            setupPopupEventHandlers(layer, plotsLayer, props, feature);
                         }
 
-                        // Buildings and subdivisions: show popup from underlying land plot
-                        if (sourceLayer === 'plan_1888_plot_subdivisions' || sourceLayer === 'plan_1888_buildings') {
-                            layer.on('click', function(e) {
-                                const clickedPoint = e.latlng;
+                        // Create plot number marker with click handler
+                        createFieldNumberMarker(layer, props, fieldLabelsGroup, minZoomForLabels, map);
 
-                                // Find land plot under the clicked point
-                                combinedLayer.eachLayer(function(l) {
-                                    if (l.feature &&
-                                        l.feature.properties.source_layer === 'plan_1888_plots' &&
-                                        l.getBounds &&
-                                        l.getBounds().contains(clickedPoint)) {
-
-                                        if (l.getPopup()) {
-                                            l.openPopup(clickedPoint);
-                                        }
-                                    }
-                                });
-                            });
-                        }
+                        // Setup hover effects
+                        setupHoverEffects(layer, plotsLayer, feature);
                     }
                 }).addTo(map);
+
+                // Layer 2: Plot subdivisions (non-interactive - middle layer)
+                subdivisionsLayer = L.geoJSON(plan1888SubdivisionsData, {
+                    style: getFeatureStyle,
+                    interactive: false  // Events pass through to plots below
+                }).addTo(map);
+
+                // Layer 3: Buildings (non-interactive - top layer)
+                buildingsLayer = L.geoJSON(plan1888BuildingsData, {
+                    style: getFeatureStyle,
+                    interactive: false  // Events pass through to plots below
+                }).addTo(map);
+
+                // For backward compatibility, keep combinedLayer reference pointing to plotsLayer
+                combinedLayer = plotsLayer;
 
                 // ========================================
                 // CREATE STREET/SQUARE LABELS FOR MAP 1 (Plan 1888)
@@ -1958,60 +2049,14 @@
                             // Bind popup only if there is data
                             if (popupContent) {
                                 layer.bindPopup(popupContent);
-
-                                // Add event listener for when popup opens
-                                layer.on('popupopen', function() {
-                                    // Highlight corresponding row in table
-                                    document.querySelectorAll('#data-table tbody tr.selected').forEach(row => {
-                                        row.classList.remove('selected');
-                                    });
-                                    document.querySelectorAll('#data-table tbody tr').forEach(row => {
-                                        if (row.dataset.fid == props.fid && row.dataset.sourceLayer == props.source_layer) {
-                                            row.classList.add('selected');
-                                            // Scroll row to top only if clicked on map (not from table)
-                                            if (!openedFromTableClick) {
-                                                scrollRowIntoView(row);
-                                            }
-                                        }
-                                    });
-                                });
+                                setupPopupEventHandlers(layer, map2Layer, props, feature);
                             }
 
-                            // Create plot number marker
-                            if (props['Field number']) {
-                                const center = layer.getBounds().getCenter();
+                            // Create plot number marker with click handler
+                            createFieldNumberMarker(layer, props, map2LabelsGroup, minZoomForLabels, map);
 
-                                // Check current zoom to set initial visibility
-                                const currentZoom = map.getZoom();
-                                const initialClass = currentZoom >= minZoomForLabels ? 'field-label' : 'field-label field-label-hidden';
-
-                                const marker = L.marker(center, {
-                                    icon: L.divIcon({
-                                        className: initialClass,
-                                        html: props['Field number'],
-                                        iconSize: [30, 20],
-                                        iconAnchor: [15, 10]
-                                    })
-                                });
-
-                                // Click on marker opens popup from parent polygon
-                                marker.on('click', function(e) {
-                                    if (layer.getPopup()) {
-                                        layer.openPopup(e.latlng);
-                                    }
-                                });
-
-                                // Add marker to map2 plot numbers group
-                                map2LabelsGroup.addLayer(marker);
-                            }
-
-                            // Hover effects for land plots
-                            layer.on('mouseover', function() {
-                                layer.setStyle({weight: 4, fillOpacity: 0.9});
-                            });
-                            layer.on('mouseout', function() {
-                                map2Layer.resetStyle(layer);
-                            });
+                            // Setup hover effects
+                            setupHoverEffects(layer, map2Layer, feature);
                         }
                     }
                 });
@@ -2045,8 +2090,9 @@
                     }
                 });
 
-                // Create group combining historical map, plot numbers, and street labels
-                const historicalMapGroup = L.layerGroup([combinedLayer, fieldLabelsGroup, streetLabelsGroup]).addTo(map);
+                // Create group combining historical map layers, plot numbers, and street labels
+                // Order: plots (bottom), subdivisions (middle), buildings (top), then labels
+                const historicalMapGroup = L.layerGroup([plotsLayer, subdivisionsLayer, buildingsLayer, fieldLabelsGroup, streetLabelsGroup]).addTo(map);
                 const map2Group = L.layerGroup([map2Layer, map2LabelsGroup, map2StreetLabelsGroup]).addTo(map);
 
                 // Overlay maps for layer control
