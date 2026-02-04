@@ -2455,6 +2455,27 @@
                                         l._sexPattern = sex === 'Male' ? 'male' : 'female';
                                         l._patternId = patternId;
                                         l._patternPath = patternPath;
+
+                                        // Create MutationObserver to sync pattern path with original path
+                                        const observer = new MutationObserver((mutations) => {
+                                            mutations.forEach((mutation) => {
+                                                if (mutation.type === 'attributes' && mutation.attributeName === 'd') {
+                                                    const newD = l._path.getAttribute('d');
+                                                    if (newD && l._patternPath) {
+                                                        l._patternPath.setAttribute('d', newD);
+                                                    }
+                                                }
+                                            });
+                                        });
+
+                                        // Observe changes to the 'd' attribute of the original path
+                                        observer.observe(l._path, {
+                                            attributes: true,
+                                            attributeFilter: ['d']
+                                        });
+
+                                        // Save observer reference for cleanup
+                                        l._pathObserver = observer;
                                     }
                                 }
                             }
@@ -2474,6 +2495,12 @@
 
                         layer.eachLayer((l) => {
                             if (l._sexPattern && l._patternPath) {
+                                // Disconnect MutationObserver
+                                if (l._pathObserver) {
+                                    l._pathObserver.disconnect();
+                                    delete l._pathObserver;
+                                }
+
                                 // Remove the cloned pattern path overlay
                                 l._patternPath.remove();
 
@@ -2488,51 +2515,13 @@
                     removeFromLayer(map2Layer);
                 }
 
-                /**
-                 * Sync pattern overlay paths with original paths
-                 * Called on map zoom/pan to update pattern positions
-                 */
-                function syncPatternPaths() {
-                    const syncLayer = (layer) => {
-                        if (!layer) return;
-
-                        layer.eachLayer((l) => {
-                            if (l._patternPath && l._path) {
-                                // Copy the 'd' attribute (path coordinates) from original to clone
-                                const d = l._path.getAttribute('d');
-                                if (d) {
-                                    l._patternPath.setAttribute('d', d);
-                                }
-                            }
-                        });
-                    };
-
-                    syncLayer(plotsLayer);
-                    syncLayer(map2Layer);
-                }
-
-                // Map event handler for syncing patterns
-                let patternSyncHandler = null;
-
                 // Event handlers for sex layer toggle
                 highlightSexLayer.on('add', function() {
                     applySexPatterns();
-
-                    // Add map event listeners to sync pattern paths on zoom/pan
-                    patternSyncHandler = function() {
-                        syncPatternPaths();
-                    };
-                    map.on('zoomend moveend', patternSyncHandler);
                 });
 
                 highlightSexLayer.on('remove', function() {
                     removeSexPatterns();
-
-                    // Remove map event listeners
-                    if (patternSyncHandler) {
-                        map.off('zoomend moveend', patternSyncHandler);
-                        patternSyncHandler = null;
-                    }
                 });
 
                 // Overlay maps for layer control
