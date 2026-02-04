@@ -614,7 +614,7 @@
             padding: 2px 4px;
             font-size: 12px;
             font-weight: bold;
-            color: #2c5f2d;
+            color: #555;
             text-align: center;
             pointer-events: none; /* Allow hover events to pass through to polygons below */
             transition: opacity 0.3s;
@@ -1707,10 +1707,35 @@
              * @param {Object} feature - The GeoJSON feature (for restoring original style)
              */
             function setupPopupEventHandlers(layer, parentLayer, props, feature) {
-                // Add event listener for when popup opens
+                // Store previous colors to restore after popup closes
+                let previousFillColor;
+                let previousBorderColor;
+                let previousLabelColor;
+
                 layer.on('popupopen', function() {
-                    // Change fill color when popup opens
-                    layer.setStyle({fillColor: '#ffffcc', weight: 3});
+                    // Save current colors before changing
+                    const currentStyle = layer.options;
+                    previousFillColor = currentStyle.fillColor;
+                    previousBorderColor = currentStyle.color;
+
+                    // Save current label color
+                    if (layer._fieldNumberMarker) {
+                        const markerElement = layer._fieldNumberMarker.getElement();
+                        if (markerElement) {
+                            previousLabelColor = markerElement.style.color || '#333';
+                        }
+                    }
+
+                    // Change to yellow highlight with #555 border and label
+                    layer.setStyle({weight: 2, fillColor: '#ffffcc', color: '#555'});
+
+                    // Change field number color to #555
+                    if (layer._fieldNumberMarker) {
+                        const markerElement = layer._fieldNumberMarker.getElement();
+                        if (markerElement) {
+                            markerElement.style.color = '#555';
+                        }
+                    }
 
                     // Highlight corresponding row in table
                     document.querySelectorAll('#data-table tbody tr.selected').forEach(row => {
@@ -1734,9 +1759,21 @@
                         row.classList.remove('selected');
                     });
 
-                    // Restore original style manually (avoid resetStyle which kills events)
+                    // Restore previous colors and original border weight
                     const originalStyle = getFeatureStyle(feature);
-                    layer.setStyle(originalStyle);
+                    layer.setStyle({
+                        weight: originalStyle.weight,
+                        fillColor: previousFillColor,
+                        color: previousBorderColor
+                    });
+
+                    // Restore field number color
+                    if (layer._fieldNumberMarker) {
+                        const markerElement = layer._fieldNumberMarker.getElement();
+                        if (markerElement) {
+                            markerElement.style.color = previousLabelColor;
+                        }
+                    }
                 });
             }
 
@@ -1750,16 +1787,14 @@
              */
             function setupHoverEffects(layer, parentLayer, feature) {
                 layer.on('mouseover', function() {
-                    // Don't change style if popup is open (highlighted state takes priority)
                     if (!layer.getPopup() || !layer.getPopup().isOpen()) {
-                        layer.setStyle({weight: 4, fillOpacity: 0.9});
+                        layer.setStyle({weight: 2});
                     }
                 });
                 layer.on('mouseout', function() {
-                    // Don't reset style if popup is open (keep highlighted state)
                     if (!layer.getPopup() || !layer.getPopup().isOpen()) {
                         const originalStyle = getFeatureStyle(feature);
-                        layer.setStyle(originalStyle);
+                        layer.setStyle({weight: originalStyle.weight});
                     }
                 });
             }
@@ -1806,6 +1841,9 @@
                 // Add marker to label group
                 labelGroup.addLayer(marker);
 
+                // Store reference to marker in layer for later access (e.g., for styling based on religion)
+                layer._fieldNumberMarker = marker;
+
                 return marker;
             }
 
@@ -1850,8 +1888,8 @@
                     return {
                         fillColor: props.fill_color || '#90EE90',
                         fillOpacity: props.fill_opacity || 0.8,
-                        color: props.stroke_color || '#2d5f2d',
-                        weight: props.stroke_width || 2,
+                        color: props.stroke_color || '#555',
+                        weight: props.stroke_width || 1,
                         opacity: 1
                     };
                 }
@@ -1862,7 +1900,7 @@
                         fillColor: props.fill_color || '#FFB6C1',
                         fillOpacity: props.fill_opacity || 0.8,
                         color: props.stroke_color || '#C71585',
-                        weight: props.stroke_width || 2,
+                        weight: props.stroke_width || 1,
                         opacity: 1
                     };
                 }
@@ -1873,7 +1911,7 @@
                         fillColor: props.fill_color || '#FFD700',
                         fillOpacity: props.fill_opacity || 0.8,
                         color: props.stroke_color || '#DAA520',
-                        weight: props.stroke_width || 2,
+                        weight: props.stroke_width || 1,
                         opacity: 1
                     };
                 }
@@ -1883,8 +1921,8 @@
                     return {
                         fillColor: props.fill_color || '#90EE90',
                         fillOpacity: props.fill_opacity || 0.8,
-                        color: props.stroke_color || '#2d5f2d',
-                        weight: props.stroke_width || 2,
+                        color: props.stroke_color || '#555',
+                        weight: props.stroke_width || 1,
                         opacity: 1
                     };
                 }
@@ -2095,11 +2133,145 @@
                 const historicalMapGroup = L.layerGroup([plotsLayer, subdivisionsLayer, buildingsLayer, fieldLabelsGroup, streetLabelsGroup]).addTo(map);
                 const map2Group = L.layerGroup([map2Layer, map2LabelsGroup, map2StreetLabelsGroup]).addTo(map);
 
+                // ========================================
+                // ETHNIC AND RELIGIOUS AFFILIATION LAYER
+                // ========================================
+
+                // Create layer for ethnic and religious affiliation highlighting
+                const ethnicReligiousLayer = L.layerGroup();
+
+                // Color mapping for religious affiliation
+                // Each religion has colors for: plot fill, border, label, subdivision, building
+                const RELIGION_COLORS = {
+                    'Christians': {
+                        plot: '#c2e699',
+                        border: '#333',
+                        label: '#333',
+                        subdivision: null,  // use default
+                        building: null      // use default
+                    },
+                    'Jews': {
+                        plot: '#7b3294',
+                        border: '#ffffff',
+                        label: '#ffffff',
+                        subdivision: null,  // use default
+                        building: null      // use default
+                    },
+                    'No data': {
+                        plot: '#edf8fb',
+                        border: '#333',
+                        label: '#333',
+                        subdivision: null,
+                        building: null
+                    },
+                    'public property': {
+                        plot: '#edf8fb',
+                        border: '#333',
+                        label: '#333',
+                        subdivision: null,
+                        building: null
+                    }
+                };
+
+                // Default colors for other values
+                const DEFAULT_RELIGION_COLORS = {
+                    plot: '#edf8fb',
+                    border: '#333',
+                    label: '#333',
+                    subdivision: null,
+                    building: null
+                };
+
+                /**
+                 * Apply religious affiliation coloring to all layers
+                 */
+                function applyReligionColoring() {
+                    // Helper function to colorize plot layers
+                    const colorizePlots = (layer) => {
+                        if (!layer) return;
+
+                        layer.eachLayer((l) => {
+                            if (l.feature && l.feature.properties) {
+                                const religion = l.feature.properties.Religion;
+                                const colors = RELIGION_COLORS[religion] || DEFAULT_RELIGION_COLORS;
+
+                                // Apply plot colors
+                                if (l.setStyle) {
+                                    l.setStyle({
+                                        fillColor: colors.plot,
+                                        color: colors.border
+                                    });
+                                }
+
+                                // Change field number color
+                                if (l._fieldNumberMarker) {
+                                    const markerElement = l._fieldNumberMarker.getElement();
+                                    if (markerElement) {
+                                        markerElement.style.color = colors.label;
+                                    }
+                                }
+
+                                // Store religion colors on layer for later restoration
+                                l._religionColors = colors;
+                            }
+                        });
+                    };
+
+                    // Apply to both plan plot layers
+                    colorizePlots(plotsLayer);
+                    colorizePlots(map2Layer);
+                }
+
+                /**
+                 * Restore original colors to all layers
+                 */
+                function restoreOriginalColors() {
+                    // Helper function to restore colors for a layer
+                    const restorePlots = (layer) => {
+                        if (!layer) return;
+
+                        layer.eachLayer((l) => {
+                            if (l.feature && l.setStyle) {
+                                const originalStyle = getFeatureStyle(l.feature);
+                                l.setStyle({
+                                    fillColor: originalStyle.fillColor,
+                                    color: originalStyle.color
+                                });
+
+                                // Restore field number color to original (#333)
+                                if (l._fieldNumberMarker) {
+                                    const markerElement = l._fieldNumberMarker.getElement();
+                                    if (markerElement) {
+                                        markerElement.style.color = '#333';
+                                    }
+                                }
+
+                                // Clear religion colors reference
+                                delete l._religionColors;
+                            }
+                        });
+                    };
+
+                    // Restore both plan layers
+                    restorePlots(plotsLayer);
+                    restorePlots(map2Layer);
+                }
+
+                // Event handlers for layer toggle
+                ethnicReligiousLayer.on('add', function() {
+                    applyReligionColoring();
+                });
+
+                ethnicReligiousLayer.on('remove', function() {
+                    restoreOriginalColors();
+                });
+
                 // Overlay maps for layer control
                 const overlayMaps = {
                     "OpenStreetMap": osmLayer,
                     "Restoration plan 1888": historicalMapGroup,
-                    "Restoration plan 1891": map2Group
+                    "Restoration plan 1891": map2Group,
+                    "Highlight ethnic and religious affiliation": ethnicReligiousLayer
                 };
 
                 // ========================================
@@ -2122,7 +2294,7 @@
 
                         // Toggle button
                         const toggleBtn = L.DomUtil.create('div', 'panel-toggle-btn', container);
-                        toggleBtn.innerHTML = '<span><span class="panel-icon">☰</span>Controls</span><span class="panel-arrow">▼</span>';
+                        toggleBtn.innerHTML = '<span>Controls</span><span class="panel-arrow">▼</span>';
 
                         // Content wrapper
                         const content = L.DomUtil.create('div', 'panel-content', container);
