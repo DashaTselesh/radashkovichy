@@ -1729,6 +1729,11 @@
                     // Change to yellow highlight with #555 border and label
                     layer.setStyle({weight: 2, fillColor: '#ffffcc', color: '#555'});
 
+                    // Update pattern color if sex layer is active
+                    if (typeof updatePatternColor === 'function') {
+                        updatePatternColor(layer, '#555');
+                    }
+
                     // Change field number color to #555
                     if (layer._fieldNumberMarker) {
                         const markerElement = layer._fieldNumberMarker.getElement();
@@ -1766,6 +1771,11 @@
                         fillColor: previousFillColor,
                         color: previousBorderColor
                     });
+
+                    // Update pattern color if sex layer is active
+                    if (typeof updatePatternColor === 'function') {
+                        updatePatternColor(layer, previousBorderColor);
+                    }
 
                     // Restore field number color
                     if (layer._fieldNumberMarker) {
@@ -1873,6 +1883,35 @@
                     });
                 });
             }
+
+            // ========================================
+            // PATTERN MANAGEMENT (defined early for use in event handlers)
+            // ========================================
+
+            /**
+             * Update pattern color for a specific layer
+             * Used when border color changes (click, religion layer toggle)
+             */
+            function updatePatternColor(layer, newColor) {
+                if (!layer._sexPattern || !layer._patternPath) return;
+
+                // Create new pattern with updated color
+                let patternId;
+                if (layer._sexPattern === 'male') {
+                    patternId = createMalePattern(newColor);
+                } else if (layer._sexPattern === 'female') {
+                    patternId = createFemalePattern(newColor);
+                }
+
+                // Apply new pattern to the overlay path
+                if (patternId) {
+                    layer._patternPath.setAttribute('fill', `url(#${patternId})`);
+                    layer._patternId = patternId;
+                }
+            }
+
+            // Placeholder for pattern creation functions (will be defined later)
+            let createMalePattern, createFemalePattern;
 
             // ========================================
             // LAYER STYLING FUNCTIONS
@@ -2211,6 +2250,11 @@
                                     }
                                 }
 
+                                // Update pattern color if sex layer is active
+                                if (typeof updatePatternColor === 'function') {
+                                    updatePatternColor(l, colors.border);
+                                }
+
                                 // Store religion colors on layer for later restoration
                                 l._religionColors = colors;
                             }
@@ -2246,6 +2290,11 @@
                                     }
                                 }
 
+                                // Update pattern color if sex layer is active
+                                if (typeof updatePatternColor === 'function') {
+                                    updatePatternColor(l, originalStyle.color);
+                                }
+
                                 // Clear religion colors reference
                                 delete l._religionColors;
                             }
@@ -2266,12 +2315,233 @@
                     restoreOriginalColors();
                 });
 
+                // ========================================
+                // SEX HIGHLIGHTING LAYER
+                // ========================================
+
+                // Create layer for sex-based highlighting
+                const highlightSexLayer = L.layerGroup();
+
+                // Get SVG container for patterns
+                let svgDefs = null;
+
+                /**
+                 * Initialize SVG patterns
+                 */
+                function initializeSVGPatterns() {
+                    // Get the SVG element from Leaflet map
+                    const svgElement = document.querySelector('.leaflet-overlay-pane svg');
+                    if (!svgElement) return;
+
+                    // Create or get <defs> element
+                    svgDefs = svgElement.querySelector('defs');
+                    if (!svgDefs) {
+                        svgDefs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+                        svgElement.insertBefore(svgDefs, svgElement.firstChild);
+                    }
+                }
+
+                /**
+                 * Create a stripe pattern for male with specific color
+                 * Returns pattern ID
+                 */
+                createMalePattern = function(color) {
+                    if (!svgDefs) initializeSVGPatterns();
+                    if (!svgDefs) return null;
+
+                    // Create unique ID based on color
+                    const patternId = 'stripe-' + color.replace('#', '');
+
+                    // Check if pattern already exists
+                    if (document.getElementById(patternId)) {
+                        return patternId;
+                    }
+
+                    // Create pattern element
+                    const pattern = document.createElementNS('http://www.w3.org/2000/svg', 'pattern');
+                    pattern.setAttribute('id', patternId);
+                    pattern.setAttribute('patternUnits', 'userSpaceOnUse');
+                    pattern.setAttribute('width', '5');
+                    pattern.setAttribute('height', '5');
+                    pattern.setAttribute('patternTransform', 'rotate(45)');
+
+                    // Create line for stripe
+                    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    line.setAttribute('x1', '0');
+                    line.setAttribute('y1', '0');
+                    line.setAttribute('x2', '0');
+                    line.setAttribute('y2', '5');
+                    line.setAttribute('stroke', color);
+                    line.setAttribute('stroke-width', '1');
+                    line.setAttribute('opacity', '0.8');
+
+                    pattern.appendChild(line);
+                    svgDefs.appendChild(pattern);
+
+                    return patternId;
+                }
+
+                /**
+                 * Create a dot pattern for female with specific color
+                 * Returns pattern ID
+                 */
+                createFemalePattern = function(color) {
+                    if (!svgDefs) initializeSVGPatterns();
+                    if (!svgDefs) return null;
+
+                    // Create unique ID based on color
+                    const patternId = 'dots-' + color.replace('#', '');
+
+                    // Check if pattern already exists
+                    if (document.getElementById(patternId)) {
+                        return patternId;
+                    }
+
+                    // Create pattern element
+                    const pattern = document.createElementNS('http://www.w3.org/2000/svg', 'pattern');
+                    pattern.setAttribute('id', patternId);
+                    pattern.setAttribute('patternUnits', 'userSpaceOnUse');
+                    pattern.setAttribute('width', '6');
+                    pattern.setAttribute('height', '6');
+
+                    // Create circle for dot
+                    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    circle.setAttribute('cx', '3');
+                    circle.setAttribute('cy', '3');
+                    circle.setAttribute('r', '1.5');
+                    circle.setAttribute('fill', color);
+                    circle.setAttribute('opacity', '0.8');
+
+                    pattern.appendChild(circle);
+                    svgDefs.appendChild(pattern);
+
+                    return patternId;
+                }
+
+                /**
+                 * Apply sex-based patterns to plot layers
+                 */
+                function applySexPatterns() {
+                    // Initialize SVG patterns if not done yet
+                    initializeSVGPatterns();
+
+                    const applyToLayer = (layer) => {
+                        if (!layer) return;
+
+                        layer.eachLayer((l) => {
+                            if (l.feature && l.feature.properties && l._path) {
+                                const sex = l.feature.properties.Sex;
+                                const borderColor = l.options.color || '#333';
+
+                                if (sex === 'Male' || sex === 'Female') {
+                                    // Create pattern
+                                    const patternId = sex === 'Male'
+                                        ? createMalePattern(borderColor)
+                                        : createFemalePattern(borderColor);
+
+                                    if (patternId) {
+                                        // Clone the path element to create overlay with pattern
+                                        const patternPath = l._path.cloneNode(true);
+                                        patternPath.setAttribute('fill', `url(#${patternId})`);
+                                        patternPath.setAttribute('stroke', 'none');
+
+                                        // Make sure clicks pass through to original path
+                                        patternPath.style.pointerEvents = 'none';
+
+                                        // Insert pattern path after original path
+                                        l._path.parentNode.insertBefore(patternPath, l._path.nextSibling);
+
+                                        // Save references
+                                        l._sexPattern = sex === 'Male' ? 'male' : 'female';
+                                        l._patternId = patternId;
+                                        l._patternPath = patternPath;
+                                    }
+                                }
+                            }
+                        });
+                    };
+
+                    applyToLayer(plotsLayer);
+                    applyToLayer(map2Layer);
+                }
+
+                /**
+                 * Remove sex-based patterns from plot layers
+                 */
+                function removeSexPatterns() {
+                    const removeFromLayer = (layer) => {
+                        if (!layer) return;
+
+                        layer.eachLayer((l) => {
+                            if (l._sexPattern && l._patternPath) {
+                                // Remove the cloned pattern path overlay
+                                l._patternPath.remove();
+
+                                delete l._sexPattern;
+                                delete l._patternId;
+                                delete l._patternPath;
+                            }
+                        });
+                    };
+
+                    removeFromLayer(plotsLayer);
+                    removeFromLayer(map2Layer);
+                }
+
+                /**
+                 * Sync pattern overlay paths with original paths
+                 * Called on map zoom/pan to update pattern positions
+                 */
+                function syncPatternPaths() {
+                    const syncLayer = (layer) => {
+                        if (!layer) return;
+
+                        layer.eachLayer((l) => {
+                            if (l._patternPath && l._path) {
+                                // Copy the 'd' attribute (path coordinates) from original to clone
+                                const d = l._path.getAttribute('d');
+                                if (d) {
+                                    l._patternPath.setAttribute('d', d);
+                                }
+                            }
+                        });
+                    };
+
+                    syncLayer(plotsLayer);
+                    syncLayer(map2Layer);
+                }
+
+                // Map event handler for syncing patterns
+                let patternSyncHandler = null;
+
+                // Event handlers for sex layer toggle
+                highlightSexLayer.on('add', function() {
+                    applySexPatterns();
+
+                    // Add map event listeners to sync pattern paths on zoom/pan
+                    patternSyncHandler = function() {
+                        syncPatternPaths();
+                    };
+                    map.on('zoomend moveend', patternSyncHandler);
+                });
+
+                highlightSexLayer.on('remove', function() {
+                    removeSexPatterns();
+
+                    // Remove map event listeners
+                    if (patternSyncHandler) {
+                        map.off('zoomend moveend', patternSyncHandler);
+                        patternSyncHandler = null;
+                    }
+                });
+
                 // Overlay maps for layer control
                 const overlayMaps = {
                     "OpenStreetMap": osmLayer,
                     "Restoration plan 1888": historicalMapGroup,
                     "Restoration plan 1891": map2Group,
-                    "Highlight ethnic and religious affiliation": ethnicReligiousLayer
+                    "Highlight ethnic and religious affiliation": ethnicReligiousLayer,
+                    "Highlight sex": highlightSexLayer
                 };
 
                 // ========================================
