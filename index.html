@@ -663,11 +663,58 @@
         /* Map Legend */
         .legend {
             background: white;
-            padding: 10px;
             border-radius: 5px;
             box-shadow: 0 1px 5px rgba(0,0,0,0.4);
             line-height: 20px;
             font-size: 12px;
+        }
+
+        .legend-toggle-btn {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: #2c5f2d;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px 5px 0 0;
+            font-weight: bold;
+            font-size: 12px;
+            user-select: none;
+        }
+
+        .legend-toggle-btn:hover {
+            background: #3a7a3e;
+        }
+
+        .legend-toggle-btn.collapsed {
+            border-radius: 5px;
+        }
+
+        .legend-arrow {
+            font-size: 12px;
+            transition: transform 0.3s;
+        }
+
+        .legend-toggle-btn.collapsed .legend-arrow {
+            transform: rotate(-90deg);
+        }
+
+        .legend-content {
+            max-height: 1000px;
+            overflow: visible;
+            transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+            opacity: 1;
+        }
+
+        .legend-content.collapsed {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+
+        .legend-content-inner {
+            padding: 10px;
         }
 
         .legend-title {
@@ -690,7 +737,12 @@
 
         /* Tablet legend styles */
         @media (max-width: 1024px) {
-            .legend {
+            .legend-toggle-btn {
+                padding: 7px 10px;
+                font-size: 11px;
+            }
+
+            .legend-content-inner {
                 padding: 8px;
                 font-size: 11px;
                 line-height: 18px;
@@ -714,7 +766,12 @@
 
         /* Mobile legend styles */
         @media (max-width: 768px) {
-            .legend {
+            .legend-toggle-btn {
+                padding: 6px 8px;
+                font-size: 10px;
+            }
+
+            .legend-content-inner {
                 padding: 6px;
                 font-size: 10px;
                 line-height: 16px;
@@ -2261,9 +2318,13 @@
                         });
                     };
 
-                    // Apply to both plan plot layers
-                    colorizePlots(plotsLayer);
-                    colorizePlots(map2Layer);
+                    // Apply colors only to visible plan layers
+                    if (map.hasLayer(historicalMapGroup)) {
+                        colorizePlots(plotsLayer);
+                    }
+                    if (map.hasLayer(map2Group)) {
+                        colorizePlots(map2Layer);
+                    }
                 }
 
                 /**
@@ -2315,6 +2376,37 @@
                 ethnicReligiousLayer.on('remove', function() {
                     restoreOriginalColors();
                     if (typeof updateLegend === 'function') updateLegend();
+                });
+
+                // Event handlers for plan layers to reapply highlight effects
+                historicalMapGroup.on('add', function() {
+                    if (map.hasLayer(ethnicReligiousLayer)) {
+                        applyReligionColoring();
+                    }
+                    if (map.hasLayer(highlightSexLayer)) {
+                        applySexPatterns();
+                    }
+                });
+
+                historicalMapGroup.on('remove', function() {
+                    if (map.hasLayer(highlightSexLayer)) {
+                        removeSexPatternsFromLayer(plotsLayer);
+                    }
+                });
+
+                map2Group.on('add', function() {
+                    if (map.hasLayer(ethnicReligiousLayer)) {
+                        applyReligionColoring();
+                    }
+                    if (map.hasLayer(highlightSexLayer)) {
+                        applySexPatterns();
+                    }
+                });
+
+                map2Group.on('remove', function() {
+                    if (map.hasLayer(highlightSexLayer)) {
+                        removeSexPatternsFromLayer(map2Layer);
+                    }
                 });
 
                 // ========================================
@@ -2486,6 +2578,11 @@
                                 const sex = l.feature.properties.Sex;
                                 const borderColor = l.options.color || '#333';
 
+                                // Skip if pattern already applied
+                                if (l._sexPattern) {
+                                    return;
+                                }
+
                                 if (sex === 'Male' || sex === 'Female') {
                                     // Create pattern
                                     const patternId = sex === 'Male'
@@ -2497,6 +2594,7 @@
                                         const patternPath = l._path.cloneNode(true);
                                         patternPath.setAttribute('fill', `url(#${patternId})`);
                                         patternPath.setAttribute('stroke', 'none');
+                                        patternPath.setAttribute('class', 'sex-pattern-overlay');
 
                                         // Make sure clicks pass through to original path
                                         patternPath.style.pointerEvents = 'none';
@@ -2535,37 +2633,74 @@
                         });
                     };
 
-                    applyToLayer(plotsLayer);
-                    applyToLayer(map2Layer);
+                    // Apply patterns only to visible plan layers
+                    if (map.hasLayer(historicalMapGroup)) {
+                        applyToLayer(plotsLayer);
+                    }
+                    if (map.hasLayer(map2Group)) {
+                        applyToLayer(map2Layer);
+                    }
                 }
 
                 /**
-                 * Remove sex-based patterns from plot layers
+                 * Remove sex-based patterns from a specific layer
+                 */
+                function removeSexPatternsFromLayer(layer) {
+                    if (!layer) return;
+
+                    layer.eachLayer((l) => {
+                        // Disconnect MutationObserver
+                        if (l._pathObserver) {
+                            l._pathObserver.disconnect();
+                            delete l._pathObserver;
+                        }
+
+                        // Remove the cloned pattern path overlay
+                        if (l._patternPath && l._patternPath.parentNode) {
+                            l._patternPath.remove();
+                        }
+
+                        // Ensure original path doesn't have pattern fill
+                        if (l._path) {
+                            const currentFill = l._path.getAttribute('fill');
+                            if (currentFill && currentFill.includes('url(#')) {
+                                l._path.removeAttribute('fill');
+                            }
+                        }
+
+                        // Restore original fill color if ethnic layer is active
+                        if (l.feature && l.setStyle) {
+                            if (map.hasLayer(ethnicReligiousLayer) && l._religionColors) {
+                                // Keep religion colors if ethnic layer is active
+                                l.setStyle({
+                                    fillColor: l._religionColors.plot
+                                });
+                            } else {
+                                // Restore original colors
+                                const originalStyle = getFeatureStyle(l.feature);
+                                l.setStyle({
+                                    fillColor: originalStyle.fillColor
+                                });
+                            }
+                        }
+
+                        // Clean up references
+                        delete l._sexPattern;
+                        delete l._patternId;
+                        delete l._patternPath;
+                    });
+                }
+
+                /**
+                 * Remove sex-based patterns from all plot layers
                  */
                 function removeSexPatterns() {
-                    const removeFromLayer = (layer) => {
-                        if (!layer) return;
+                    removeSexPatternsFromLayer(plotsLayer);
+                    removeSexPatternsFromLayer(map2Layer);
 
-                        layer.eachLayer((l) => {
-                            if (l._sexPattern && l._patternPath) {
-                                // Disconnect MutationObserver
-                                if (l._pathObserver) {
-                                    l._pathObserver.disconnect();
-                                    delete l._pathObserver;
-                                }
-
-                                // Remove the cloned pattern path overlay
-                                l._patternPath.remove();
-
-                                delete l._sexPattern;
-                                delete l._patternId;
-                                delete l._patternPath;
-                            }
-                        });
-                    };
-
-                    removeFromLayer(plotsLayer);
-                    removeFromLayer(map2Layer);
+                    // Also remove any orphaned pattern overlays by class
+                    const orphanedPatterns = document.querySelectorAll('.sex-pattern-overlay');
+                    orphanedPatterns.forEach(pattern => pattern.remove());
                 }
 
                 // Event handlers for sex layer toggle
@@ -2592,24 +2727,45 @@
                 // MAP LEGEND
                 // ========================================
 
-                let legendDiv = null; // Reference to legend container
+                let legendDiv = null;
+                let legendContentDiv = null;
 
                 const legend = L.control({position: 'bottomleft'});
 
                 legend.onAdd = function(map) {
                     legendDiv = L.DomUtil.create('div', 'legend');
-                    updateLegend(); // Initial render
+
+                    // Toggle button
+                    const toggleBtn = L.DomUtil.create('div', 'legend-toggle-btn', legendDiv);
+                    toggleBtn.innerHTML = '<span>Legend</span><span class="legend-arrow">▼</span>';
+
+                    // Content wrapper
+                    legendContentDiv = L.DomUtil.create('div', 'legend-content', legendDiv);
+
+                    // Update legend content
+                    updateLegend();
+
+                    // Toggle functionality
+                    toggleBtn.addEventListener('click', () => {
+                        legendContentDiv.classList.toggle('collapsed');
+                        toggleBtn.classList.toggle('collapsed');
+                    });
+
+                    // Prevent map interaction
+                    L.DomEvent.disableClickPropagation(toggleBtn);
+                    L.DomEvent.disableScrollPropagation(legendDiv);
+
                     return legendDiv;
                 };
 
                 // Function to update legend based on active layers
                 function updateLegend() {
-                    if (!legendDiv) return;
+                    if (!legendContentDiv) return;
 
                     const isReligiousLayerActive = map.hasLayer(ethnicReligiousLayer);
                     const isSexLayerActive = map.hasLayer(highlightSexLayer);
 
-                    let legendHTML = '<div class="legend-title">Legend</div>';
+                    let legendHTML = '';
 
                     if (isReligiousLayerActive) {
                         // Show religion-based land plots
@@ -2662,7 +2818,7 @@
                         </div>
                     `;
 
-                    legendDiv.innerHTML = legendHTML;
+                    legendContentDiv.innerHTML = `<div class="legend-content-inner">${legendHTML}</div>`;
                 }
 
                 legend.addTo(map);
@@ -2675,6 +2831,10 @@
                 const map1Center = [54.154854, 27.240569]; // Map 1 center
                 const map2Center = [54.161500, 27.235000]; // Map 2 center
                 const navigationZoom = 18;
+
+                // Store references to highlight layer controls
+                let highlightEthnicLabel = null;
+                let highlightSexLabel = null;
 
                 // Create collapsible control panel with all sections
                 const ControlPanel = L.Control.extend({
@@ -2739,6 +2899,13 @@
                                     leafletMap.removeLayer(layers[name]);
                                 }
                             });
+
+                            // Store references to highlight layer controls
+                            if (name === "Highlight ethnic and religious affiliation") {
+                                highlightEthnicLabel = label;
+                            } else if (name === "Highlight sex") {
+                                highlightSexLabel = label;
+                            }
                         });
 
                         return section;
@@ -2860,6 +3027,58 @@
 
                 const controlPanel = new ControlPanel();
                 controlPanel.addTo(map);
+
+                // Function to update availability of highlight layer controls
+                function updateHighlightLayersVisibility() {
+                    const hasMap1 = map.hasLayer(historicalMapGroup);
+                    const hasMap2 = map.hasLayer(map2Group);
+                    const hasAnyPlan = hasMap1 || hasMap2;
+
+                    // Disable/enable checkboxes instead of hiding them
+                    if (highlightEthnicLabel) {
+                        const checkbox = highlightEthnicLabel.querySelector('input[type="checkbox"]');
+                        if (checkbox) {
+                            checkbox.disabled = !hasAnyPlan;
+                            // Uncheck when disabled
+                            if (!hasAnyPlan) {
+                                checkbox.checked = false;
+                            }
+                        }
+                        highlightEthnicLabel.style.opacity = hasAnyPlan ? '1' : '0.4';
+                        highlightEthnicLabel.style.pointerEvents = hasAnyPlan ? '' : 'none';
+                    }
+                    if (highlightSexLabel) {
+                        const checkbox = highlightSexLabel.querySelector('input[type="checkbox"]');
+                        if (checkbox) {
+                            checkbox.disabled = !hasAnyPlan;
+                            // Uncheck when disabled
+                            if (!hasAnyPlan) {
+                                checkbox.checked = false;
+                            }
+                        }
+                        highlightSexLabel.style.opacity = hasAnyPlan ? '1' : '0.4';
+                        highlightSexLabel.style.pointerEvents = hasAnyPlan ? '' : 'none';
+                    }
+
+                    // If no plans are visible, remove highlight layers
+                    if (!hasAnyPlan) {
+                        if (map.hasLayer(ethnicReligiousLayer)) {
+                            map.removeLayer(ethnicReligiousLayer);
+                        }
+                        if (map.hasLayer(highlightSexLayer)) {
+                            map.removeLayer(highlightSexLayer);
+                        }
+                    }
+                }
+
+                // Add event listeners to plan layers
+                historicalMapGroup.on('add', updateHighlightLayersVisibility);
+                historicalMapGroup.on('remove', updateHighlightLayersVisibility);
+                map2Group.on('add', updateHighlightLayersVisibility);
+                map2Group.on('remove', updateHighlightLayersVisibility);
+
+                // Initial visibility update
+                updateHighlightLayersVisibility();
 
                 // Add click handlers for navigation buttons
                 document.querySelectorAll('.map-nav-btn').forEach(btn => {
