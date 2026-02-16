@@ -1675,8 +1675,8 @@
             // MAP CONFIGURATION
             // ========================================
 
-            const mapCenter = [54.158000, 27.237500]; // Center between both maps
-            const initialZoom = 16;
+            const mapCenter = [54.159000, 27.237500]; // Center between both maps
+            const initialZoom = 15;
             const minZoomForLabels = 18; // Minimum zoom level to show labels
             
             // ========================================
@@ -2828,9 +2828,9 @@
                 // ========================================
 
                 // Define map centers and zoom levels
-                const map1Center = [54.154854, 27.240569]; // Map 1 center
-                const map2Center = [54.161500, 27.235000]; // Map 2 center
-                const navigationZoom = 18;
+                const map1Center = [54.154454, 27.243569]; // Map 1 center
+                const map2Center = [54.160500, 27.235000]; // Map 2 center
+                const navigationZoom = 17;
 
                 // Store references to highlight layer controls
                 let highlightEthnicLabel = null;
@@ -2870,9 +2870,12 @@
                             toggleBtn.classList.toggle('collapsed');
                         });
 
-                        // Prevent map interaction only for toggle button and content
-                        L.DomEvent.disableClickPropagation(toggleBtn);
+                        // Prevent map interaction for the entire control panel
+                        L.DomEvent.disableClickPropagation(container);
                         L.DomEvent.disableScrollPropagation(container);
+                        L.DomEvent.on(container, 'mousedown dblclick', function(e) {
+                            L.DomEvent.stopPropagation(e);
+                        });
 
                         return container;
                     },
@@ -3084,11 +3087,6 @@
                 document.querySelectorAll('.map-nav-btn').forEach(btn => {
                     btn.addEventListener('click', function() {
                         const view = this.getAttribute('data-view');
-
-                        // Remove active class from all buttons
-                        document.querySelectorAll('.map-nav-btn').forEach(b => b.classList.remove('active'));
-                        // Add active class to clicked button
-                        this.classList.add('active');
 
                         // Handle view switching
                         if (view === 'map1') {
