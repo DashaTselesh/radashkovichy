@@ -2309,18 +2309,66 @@
                 // Event handlers for layer toggle
                 ethnicReligiousLayer.on('add', function() {
                     applyReligionColoring();
+                    if (typeof updateLegend === 'function') updateLegend();
                 });
 
                 ethnicReligiousLayer.on('remove', function() {
                     restoreOriginalColors();
+                    if (typeof updateLegend === 'function') updateLegend();
                 });
 
                 // ========================================
                 // SEX HIGHLIGHTING LAYER
                 // ========================================
 
-                // Create layer for sex-based highlighting
                 const highlightSexLayer = L.layerGroup();
+
+                // ========================================
+                // PATTERN CONFIGURATION
+                // ========================================
+
+                const MALE_PATTERN_CONFIG = {
+                    width: 4,
+                    height: 4,
+                    rotation: 45,
+                    lineStrokeWidth: 1,
+                    opacity: 0.8
+                };
+
+                const FEMALE_PATTERN_CONFIG = {
+                    width: 4,
+                    height: 4,
+                    dotRadius: 1,
+                    opacity: 0.8
+                };
+
+                /**
+                 * Generate CSS for male pattern (for legend)
+                 */
+                function getMalePatternCSS(color, bgColor = 'white') {
+                    const cfg = MALE_PATTERN_CONFIG;
+                    const rgb = hexToRgb(color);
+                    const gapSize = cfg.width - cfg.lineStrokeWidth;
+                    return `repeating-linear-gradient(135deg, transparent, transparent ${gapSize}px, rgba(${rgb}, ${cfg.opacity}) ${gapSize}px, rgba(${rgb}, ${cfg.opacity}) ${cfg.width}px), ${bgColor}`;
+                }
+
+                /**
+                 * Generate CSS for female pattern (for legend)
+                 */
+                function getFemalePatternCSS(color, bgColor = 'white') {
+                    const cfg = FEMALE_PATTERN_CONFIG;
+                    const center = cfg.width / 2;
+                    const rgb = hexToRgb(color);
+                    return `radial-gradient(circle at ${center}px ${center}px, rgba(${rgb}, ${cfg.opacity}) ${cfg.dotRadius}px, transparent ${cfg.dotRadius}px), ${bgColor}`;
+                }
+
+                /**
+                 * Convert hex color to RGB values
+                 */
+                function hexToRgb(hex) {
+                    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                    return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : '51, 51, 51';
+                }
 
                 // Get SVG container for patterns
                 let svgDefs = null;
@@ -2349,6 +2397,8 @@
                     if (!svgDefs) initializeSVGPatterns();
                     if (!svgDefs) return null;
 
+                    const cfg = MALE_PATTERN_CONFIG;
+
                     // Create unique ID based on color
                     const patternId = 'stripe-' + color.replace('#', '');
 
@@ -2361,19 +2411,19 @@
                     const pattern = document.createElementNS('http://www.w3.org/2000/svg', 'pattern');
                     pattern.setAttribute('id', patternId);
                     pattern.setAttribute('patternUnits', 'userSpaceOnUse');
-                    pattern.setAttribute('width', '5');
-                    pattern.setAttribute('height', '5');
-                    pattern.setAttribute('patternTransform', 'rotate(45)');
+                    pattern.setAttribute('width', cfg.width.toString());
+                    pattern.setAttribute('height', cfg.height.toString());
+                    pattern.setAttribute('patternTransform', `rotate(${cfg.rotation})`);
 
                     // Create line for stripe
                     const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
                     line.setAttribute('x1', '0');
                     line.setAttribute('y1', '0');
                     line.setAttribute('x2', '0');
-                    line.setAttribute('y2', '5');
+                    line.setAttribute('y2', cfg.height.toString());
                     line.setAttribute('stroke', color);
-                    line.setAttribute('stroke-width', '1');
-                    line.setAttribute('opacity', '0.8');
+                    line.setAttribute('stroke-width', cfg.lineStrokeWidth.toString());
+                    line.setAttribute('opacity', cfg.opacity.toString());
 
                     pattern.appendChild(line);
                     svgDefs.appendChild(pattern);
@@ -2389,6 +2439,8 @@
                     if (!svgDefs) initializeSVGPatterns();
                     if (!svgDefs) return null;
 
+                    const cfg = FEMALE_PATTERN_CONFIG;
+
                     // Create unique ID based on color
                     const patternId = 'dots-' + color.replace('#', '');
 
@@ -2401,16 +2453,17 @@
                     const pattern = document.createElementNS('http://www.w3.org/2000/svg', 'pattern');
                     pattern.setAttribute('id', patternId);
                     pattern.setAttribute('patternUnits', 'userSpaceOnUse');
-                    pattern.setAttribute('width', '6');
-                    pattern.setAttribute('height', '6');
+                    pattern.setAttribute('width', cfg.width.toString());
+                    pattern.setAttribute('height', cfg.height.toString());
 
                     // Create circle for dot
                     const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-                    circle.setAttribute('cx', '3');
-                    circle.setAttribute('cy', '3');
-                    circle.setAttribute('r', '1.5');
+                    const center = cfg.width / 2;
+                    circle.setAttribute('cx', center.toString());
+                    circle.setAttribute('cy', center.toString());
+                    circle.setAttribute('r', cfg.dotRadius.toString());
                     circle.setAttribute('fill', color);
-                    circle.setAttribute('opacity', '0.8');
+                    circle.setAttribute('opacity', cfg.opacity.toString());
 
                     pattern.appendChild(circle);
                     svgDefs.appendChild(pattern);
@@ -2518,10 +2571,12 @@
                 // Event handlers for sex layer toggle
                 highlightSexLayer.on('add', function() {
                     applySexPatterns();
+                    if (typeof updateLegend === 'function') updateLegend();
                 });
 
                 highlightSexLayer.on('remove', function() {
                     removeSexPatterns();
+                    if (typeof updateLegend === 'function') updateLegend();
                 });
 
                 // Overlay maps for layer control
@@ -2532,6 +2587,85 @@
                     "Highlight ethnic and religious affiliation": ethnicReligiousLayer,
                     "Highlight sex": highlightSexLayer
                 };
+
+                // ========================================
+                // MAP LEGEND
+                // ========================================
+
+                let legendDiv = null; // Reference to legend container
+
+                const legend = L.control({position: 'bottomleft'});
+
+                legend.onAdd = function(map) {
+                    legendDiv = L.DomUtil.create('div', 'legend');
+                    updateLegend(); // Initial render
+                    return legendDiv;
+                };
+
+                // Function to update legend based on active layers
+                function updateLegend() {
+                    if (!legendDiv) return;
+
+                    const isReligiousLayerActive = map.hasLayer(ethnicReligiousLayer);
+                    const isSexLayerActive = map.hasLayer(highlightSexLayer);
+
+                    let legendHTML = '<div class="legend-title">Legend</div>';
+
+                    if (isReligiousLayerActive) {
+                        // Show religion-based land plots
+                        legendHTML += `
+                            <div class="legend-item">
+                                <span class="legend-color" style="background:#7b3294; border-color:#ffffff;"></span>
+                                Jews land plots
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color" style="background:#c2e699; border-color:#333;"></span>
+                                Christians land plots
+                            </div>
+                        `;
+                    } else {
+                        // Show default land plots
+                        legendHTML += `
+                            <div class="legend-item">
+                                <span class="legend-color" style="background:#90EE90; border-color:#2d5f2d;"></span>
+                                Land plots
+                            </div>
+                        `;
+                    }
+
+                    if (isSexLayerActive) {
+                        const patternColor = '#333';
+                        const malePatternCSS = getMalePatternCSS(patternColor);
+                        const femalePatternCSS = getFemalePatternCSS(patternColor);
+
+                        legendHTML += `
+                            <div class="legend-item">
+                                <span class="legend-color" style="background: ${malePatternCSS}; border-color:#333;"></span>
+                                Male land plots
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color" style="background: ${femalePatternCSS}; background-size: ${FEMALE_PATTERN_CONFIG.width}px ${FEMALE_PATTERN_CONFIG.height}px; border-color:#333;"></span>
+                                Female land plots
+                            </div>
+                        `;
+                    }
+
+                    // Always show plot subdivisions and buildings
+                    legendHTML += `
+                        <div class="legend-item">
+                            <span class="legend-color" style="background:#FFB6C1; border-color:#C71585;"></span>
+                            Plot subdivisions
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color" style="background:#FFD700; border-color:#DAA520;"></span>
+                            Buildings
+                        </div>
+                    `;
+
+                    legendDiv.innerHTML = legendHTML;
+                }
+
+                legend.addTo(map);
 
                 // ========================================
                 // COLLAPSIBLE CONTROL PANEL
@@ -3948,33 +4082,6 @@
                 filtersIcon.classList.toggle('collapsed');
             });
 
-            // ========================================
-            // MAP LEGEND
-            // ========================================
-
-            const legend = L.control({position: 'bottomleft'});
-
-            legend.onAdd = function(map) {
-                const div = L.DomUtil.create('div', 'legend');
-                div.innerHTML = `
-                    <div class="legend-title">Legend</div>
-                    <div class="legend-item">
-                        <span class="legend-color" style="background:#90EE90; border-color:#2d5f2d;"></span>
-                        Land plots
-                    </div>
-                    <div class="legend-item">
-                        <span class="legend-color" style="background:#FFB6C1; border-color:#C71585;"></span>
-                        Plot subdivisions
-                    </div>
-                    <div class="legend-item">
-                        <span class="legend-color" style="background:#FFD700; border-color:#DAA520;"></span>
-                        Buildings
-                    </div>
-                `;
-                return div;
-            };
-
-            legend.addTo(map);
 
             // ========================================
             // MAP SCALE
