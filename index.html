@@ -62,14 +62,67 @@
 
         #page-description {
             font-size: 16px;
-            color: #666;
-            line-height: 1.6;
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 15px;
+            color: #444;
+            line-height: 1.7;
+            max-width: 1600px;
+            margin: 20px auto;
+            padding: 30px 40px;
             background: #f9f9f9;
             border-radius: 8px;
-            min-height: 60px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .user-guide-intro {
+            margin-bottom: 28px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid #ddd;
+            color: #555;
+            font-style: italic;
+        }
+
+        .user-guide-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+        }
+
+        .guide-column h4 {
+            color: #2c5f2d;
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-top: 0;
+            margin-bottom: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .guide-column p {
+            margin: 0 0 14px 0;
+        }
+
+        .guide-column p:last-child {
+            margin-bottom: 0;
+        }
+
+        .guide-column ul {
+            margin: 8px 0 14px 0;
+            padding-left: 20px;
+        }
+
+        .guide-column li {
+            margin-bottom: 6px;
+        }
+
+        @media (max-width: 768px) {
+            .user-guide-content {
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+
+            #page-description {
+                padding: 20px;
+                margin: 10px;
+            }
         }
 
         #container {
@@ -1513,6 +1566,36 @@
         <h1 id="page-title">Mapping for local history projects: from archival document to user model</h1>
         <h2 id="page-subtitle">Plans for the restoration of Radashkovichy after the fires of 1888 and 1891: indicating land plots and owners</h2>
     </header>
+
+    <div id="page-description">
+        <div class="user-guide-intro">
+            <p>Project description will be added here.</p>
+        </div>
+
+        <div class="user-guide-content">
+            <div class="guide-column">
+                <h4>Interactive Map</h4>
+                <p>Navigate the map by clicking and dragging to move around, or use the scroll wheel and +/− buttons in the top-left corner to zoom.</p>
+                <p>Click any land plot to view its details: householder's name and dimensions. The data table below automatically scrolls to the corresponding record.</p>
+                <p>The control in the top-right corner lets you toggle different layers:</p>
+                <ul>
+                    <li><strong>Land plots</strong> from the 1888 and 1891 restoration plans</li>
+                    <li><strong>Color overlays</strong> visualizing ethnic and religious affiliation</li>
+                    <li><strong>Pattern overlays</strong> showing plot distribution by sex</li>
+                </ul>
+                <p>These visual overlays help you analyze how land was distributed among different groups.</p>
+                <p>The restoration plans can also be downloaded as GeoJSON files from the same menu for use in GIS software.</p>
+            </div>
+
+            <div class="guide-column">
+                <h4>Data Table</h4>
+                <p>The table displays all land plots with their associated records. Clicking a row highlights the corresponding plot on the map.</p>
+                <p>Press the <strong>Filters</strong> button to expand the search and filter panel. The search field matches text across all columns. Filters let you narrow results by householder name, religion, sex, and more. Combine them freely.</p>
+                <p>Click any column header to sort; click again to reverse the order.</p>
+                <p>The download button exports CSV files compatible with any spreadsheet application. You can choose to download either filtered records or the complete dataset.</p>
+            </div>
+        </div>
+    </div>
 
     <div id="container">
         <div id="map-section">
