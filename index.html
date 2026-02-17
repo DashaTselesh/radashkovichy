@@ -679,6 +679,13 @@
             opacity: 0;
         }
 
+        div.leaflet-marker-icon.significance-marker {
+            background: transparent;
+            border: none;
+            pointer-events: none;
+            overflow: visible;
+        }
+
         /* Street Name Labels */
         .leaflet-text-path {
             pointer-events: none;
@@ -2469,11 +2476,17 @@
                     if (map.hasLayer(highlightSexLayer)) {
                         applySexPatterns();
                     }
+                    if (map.hasLayer(highlightSignificanceLayer)) {
+                        applySignificanceMarkers();
+                    }
                 });
 
                 historicalMapGroup.on('remove', function() {
                     if (map.hasLayer(highlightSexLayer)) {
                         removeSexPatternsFromLayer(plotsLayer);
+                    }
+                    if (map.hasLayer(highlightSignificanceLayer)) {
+                        applySignificanceMarkers();
                     }
                 });
 
@@ -2484,11 +2497,17 @@
                     if (map.hasLayer(highlightSexLayer)) {
                         applySexPatterns();
                     }
+                    if (map.hasLayer(highlightSignificanceLayer)) {
+                        applySignificanceMarkers();
+                    }
                 });
 
                 map2Group.on('remove', function() {
                     if (map.hasLayer(highlightSexLayer)) {
                         removeSexPatternsFromLayer(map2Layer);
+                    }
+                    if (map.hasLayer(highlightSignificanceLayer)) {
+                        applySignificanceMarkers();
                     }
                 });
 
@@ -2797,13 +2816,134 @@
                     if (typeof updateLegend === 'function') updateLegend();
                 });
 
+                // ========================================
+                // PLOT SIGNIFICANCE LAYER
+                // ========================================
+
+                const highlightSignificanceLayer = L.layerGroup();
+                const significanceMarkersGroup = L.layerGroup();
+
+                function createSignificanceMarker(latlng, type, highZoom) {
+                    let svgHtml, iconSize, iconAnchor;
+
+                    if (type === 'Religious') {
+                        svgHtml = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14">' +
+                                  '<polygon points="7,1 13,13 1,13" fill="white" stroke="#333" stroke-width="1.5" stroke-linejoin="round"/>' +
+                                  '</svg>';
+                        iconSize = [14, 14];
+                        iconAnchor = highZoom ? [-7, 7] : [7, 7];
+                    } else if (type === 'Economic') {
+                        svgHtml = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12">' +
+                                  '<rect x="1" y="1" width="10" height="10" fill="white" stroke="#333" stroke-width="1.5"/>' +
+                                  '</svg>';
+                        iconSize = [12, 12];
+                        iconAnchor = highZoom ? [-7, 6] : [6, 6];
+                    } else {
+                        return null;
+                    }
+
+                    return L.marker(latlng, {
+                        icon: L.divIcon({
+                            className: 'significance-marker',
+                            html: svgHtml,
+                            iconSize: iconSize,
+                            iconAnchor: iconAnchor
+                        }),
+                        interactive: false,
+                        zIndexOffset: 100
+                    });
+                }
+
+                let significanceHighZoom = null;
+
+                function setFieldLabelOffset(polygonLayer, offsetRight) {
+                    const marker = polygonLayer._fieldNumberMarker;
+                    if (!marker) return;
+                    const zoom = map.getZoom();
+                    const className = zoom >= minZoomForLabels ? 'field-label' : 'field-label field-label-hidden';
+
+                    if (offsetRight) {
+                        if (!polygonLayer._origLabelHtml) {
+                            polygonLayer._origLabelHtml = marker.options.icon.options.html;
+                        }
+                        marker.setIcon(L.divIcon({
+                            className: className,
+                            html: '<span style="display:block;text-align:right;width:22px;line-height:inherit;">'
+                                  + polygonLayer._origLabelHtml + '</span>',
+                            iconSize: [22, 20],
+                            iconAnchor: [22, 10]
+                        }));
+                    } else {
+                        marker.setIcon(L.divIcon({
+                            className: className,
+                            html: polygonLayer._origLabelHtml || marker.options.icon.options.html,
+                            iconSize: [30, 20],
+                            iconAnchor: [15, 10]
+                        }));
+                    }
+                }
+
+                function applySignificanceMarkers() {
+                    significanceMarkersGroup.clearLayers();
+                    const isHighZoom = map.getZoom() >= minZoomForLabels;
+                    significanceHighZoom = isHighZoom;
+
+                    const processLayer = (layer) => {
+                        if (!layer) return;
+                        layer.eachLayer((l) => {
+                            if (!l.feature || !l.feature.properties) return;
+                            const significance = l.feature.properties['Plot significance'];
+                            if (!significance) return;
+                            const center = l.getBounds().getCenter();
+                            const marker = createSignificanceMarker(center, significance, isHighZoom);
+                            if (marker) significanceMarkersGroup.addLayer(marker);
+                            setFieldLabelOffset(l, isHighZoom);
+                        });
+                    };
+
+                    if (map.hasLayer(historicalMapGroup)) processLayer(plotsLayer);
+                    if (map.hasLayer(map2Group)) processLayer(map2Layer);
+
+                    significanceMarkersGroup.addTo(map);
+                }
+
+                function removeSignificanceMarkers() {
+                    significanceMarkersGroup.clearLayers();
+                    if (map.hasLayer(significanceMarkersGroup)) {
+                        map.removeLayer(significanceMarkersGroup);
+                    }
+                    // Restore field number labels to centered alignment
+                    const restoreLayer = (layer) => {
+                        if (!layer) return;
+                        layer.eachLayer((l) => {
+                            if (!l.feature || !l.feature.properties) return;
+                            if (!l.feature.properties['Plot significance']) return;
+                            setFieldLabelOffset(l, false);
+                        });
+                    };
+                    if (map.hasLayer(historicalMapGroup)) restoreLayer(plotsLayer);
+                    if (map.hasLayer(map2Group)) restoreLayer(map2Layer);
+                    significanceHighZoom = null;
+                }
+
+                highlightSignificanceLayer.on('add', function() {
+                    applySignificanceMarkers();
+                    if (typeof updateLegend === 'function') updateLegend();
+                });
+
+                highlightSignificanceLayer.on('remove', function() {
+                    removeSignificanceMarkers();
+                    if (typeof updateLegend === 'function') updateLegend();
+                });
+
                 // Overlay maps for layer control
                 const overlayMaps = {
                     "OpenStreetMap": osmLayer,
                     "Restoration plan 1888": historicalMapGroup,
                     "Restoration plan 1891": map2Group,
                     "Highlight ethnic and religious affiliation": ethnicReligiousLayer,
-                    "Highlight sex": highlightSexLayer
+                    "Highlight sex": highlightSexLayer,
+                    "Plot significance": highlightSignificanceLayer
                 };
 
                 // ========================================
@@ -2847,6 +2987,7 @@
 
                     const isReligiousLayerActive = map.hasLayer(ethnicReligiousLayer);
                     const isSexLayerActive = map.hasLayer(highlightSexLayer);
+                    const isSignificanceLayerActive = map.hasLayer(highlightSignificanceLayer);
 
                     let legendHTML = '';
 
@@ -2872,6 +3013,18 @@
                         `;
                     }
 
+                    // Always show plot subdivisions and buildings
+                    legendHTML += `
+                        <div class="legend-item">
+                            <span class="legend-color" style="background:#c2e699; border-color:#78c679;"></span>
+                            Plot subdivisions
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color" style="background:#ffffcc; border-color:#e6e6b3;"></span>
+                            Buildings
+                        </div>
+                    `;
+
                     if (isSexLayerActive) {
                         const patternColor = '#333';
                         const malePatternCSS = getMalePatternCSS(patternColor);
@@ -2889,17 +3042,20 @@
                         `;
                     }
 
-                    // Always show plot subdivisions and buildings
-                    legendHTML += `
-                        <div class="legend-item">
-                            <span class="legend-color" style="background:#c2e699; border-color:#78c679;"></span>
-                            Plot subdivisions
-                        </div>
-                        <div class="legend-item">
-                            <span class="legend-color" style="background:#ffffcc; border-color:#e6e6b3;"></span>
-                            Buildings
-                        </div>
-                    `;
+                    if (isSignificanceLayerActive) {
+                        legendHTML += `
+                            <div class="legend-item">
+                                <svg style="display:inline-block;vertical-align:middle;margin-right:5px;" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14">
+                                    <polygon points="7,1 13,13 1,13" fill="white" stroke="#333" stroke-width="1.5" stroke-linejoin="round"/>
+                                </svg>Religious significance
+                            </div>
+                            <div class="legend-item">
+                                <svg style="display:inline-block;vertical-align:middle;margin-right:5px;" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12">
+                                    <rect x="1" y="1" width="10" height="10" fill="white" stroke="#333" stroke-width="1.5"/>
+                                </svg>Economic significance
+                            </div>
+                        `;
+                    }
 
                     legendContentDiv.innerHTML = `<div class="legend-content-inner">${legendHTML}</div>`;
                 }
@@ -2918,6 +3074,7 @@
                 // Store references to highlight layer controls
                 let highlightEthnicLabel = null;
                 let highlightSexLabel = null;
+                let highlightSignificanceLabel = null;
 
                 // Create collapsible control panel with all sections
                 const ControlPanel = L.Control.extend({
@@ -2991,6 +3148,8 @@
                                 highlightEthnicLabel = label;
                             } else if (name === "Highlight sex") {
                                 highlightSexLabel = label;
+                            } else if (name === "Plot significance") {
+                                highlightSignificanceLabel = label;
                             }
                         });
 
@@ -3145,6 +3304,17 @@
                         highlightSexLabel.style.opacity = hasAnyPlan ? '1' : '0.4';
                         highlightSexLabel.style.pointerEvents = hasAnyPlan ? '' : 'none';
                     }
+                    if (highlightSignificanceLabel) {
+                        const checkbox = highlightSignificanceLabel.querySelector('input[type="checkbox"]');
+                        if (checkbox) {
+                            checkbox.disabled = !hasAnyPlan;
+                            if (!hasAnyPlan) {
+                                checkbox.checked = false;
+                            }
+                        }
+                        highlightSignificanceLabel.style.opacity = hasAnyPlan ? '1' : '0.4';
+                        highlightSignificanceLabel.style.pointerEvents = hasAnyPlan ? '' : 'none';
+                    }
 
                     // If no plans are visible, remove highlight layers
                     if (!hasAnyPlan) {
@@ -3153,6 +3323,9 @@
                         }
                         if (map.hasLayer(highlightSexLayer)) {
                             map.removeLayer(highlightSexLayer);
+                        }
+                        if (map.hasLayer(highlightSignificanceLayer)) {
+                            map.removeLayer(highlightSignificanceLayer);
                         }
                     }
                 }
@@ -3251,6 +3424,14 @@
                             }
                         }
                     });
+
+                    // Reposition significance markers when crossing the zoom threshold
+                    if (map.hasLayer(highlightSignificanceLayer)) {
+                        const isHighZoom = zoom >= minZoomForLabels;
+                        if (significanceHighZoom !== isHighZoom) {
+                            applySignificanceMarkers();
+                        }
+                    }
                 }
 
                 // Initialize label visibility
