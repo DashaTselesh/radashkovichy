@@ -1783,8 +1783,8 @@
                         }
                     }
 
-                    // Change to yellow highlight with #555 border and label
-                    layer.setStyle({weight: 2, fillColor: '#ffffcc', color: '#555'});
+                    // Change to orange highlight with #555 border and label
+                    layer.setStyle({weight: 2, fillColor: '#f7f786', color: '#555'});
 
                     // Update pattern color if sex layer is active
                     if (typeof updatePatternColor === 'function') {
@@ -1982,7 +1982,7 @@
                 // Plan 1888 - Land plots
                 if (sourceLayer === 'plan_1888_plots') {
                     return {
-                        fillColor: props.fill_color || '#90EE90',
+                        fillColor: props.fill_color || '#78c679',
                         fillOpacity: props.fill_opacity || 0.8,
                         color: props.stroke_color || '#555',
                         weight: props.stroke_width || 1,
@@ -1993,9 +1993,9 @@
                 // Plan 1888 - Plot subdivisions
                 if (sourceLayer === 'plan_1888_plot_subdivisions') {
                     return {
-                        fillColor: props.fill_color || '#FFB6C1',
+                        fillColor: props.fill_color || '#c2e699',
                         fillOpacity: props.fill_opacity || 0.8,
-                        color: props.stroke_color || '#C71585',
+                        color: props.stroke_color || '#78c679',
                         weight: props.stroke_width || 1,
                         opacity: 1
                     };
@@ -2004,9 +2004,9 @@
                 // Plan 1888 - Buildings
                 if (sourceLayer === 'plan_1888_buildings') {
                     return {
-                        fillColor: props.fill_color || '#FFD700',
+                        fillColor: props.fill_color || '#ffffcc',
                         fillOpacity: props.fill_opacity || 0.8,
-                        color: props.stroke_color || '#DAA520',
+                        color: props.stroke_color || '#e6e6b3',
                         weight: props.stroke_width || 1,
                         opacity: 1
                     };
@@ -2015,7 +2015,7 @@
                 // Plan 1891 - Land plots
                 if (sourceLayer === 'plan_1891_plots') {
                     return {
-                        fillColor: props.fill_color || '#90EE90',
+                        fillColor: props.fill_color || '#78c679',
                         fillOpacity: props.fill_opacity || 0.8,
                         color: props.stroke_color || '#555',
                         weight: props.stroke_width || 1,
@@ -2240,7 +2240,7 @@
                 // Each religion has colors for: plot fill, border, label, subdivision, building
                 const RELIGION_COLORS = {
                     'Christians': {
-                        plot: '#c2e699',
+                        plot: '#93d14a',
                         border: '#333',
                         label: '#333',
                         subdivision: null,  // use default
@@ -2271,7 +2271,7 @@
 
                 // Default colors for other values
                 const DEFAULT_RELIGION_COLORS = {
-                    plot: '#edf8fb',
+                    plot: '#ffcaca',
                     border: '#333',
                     label: '#333',
                     subdivision: null,
@@ -2775,7 +2775,7 @@
                                 Jews land plots
                             </div>
                             <div class="legend-item">
-                                <span class="legend-color" style="background:#c2e699; border-color:#333;"></span>
+                                <span class="legend-color" style="background:#a6d96a; border-color:#333;"></span>
                                 Christians land plots
                             </div>
                         `;
@@ -2783,7 +2783,7 @@
                         // Show default land plots
                         legendHTML += `
                             <div class="legend-item">
-                                <span class="legend-color" style="background:#90EE90; border-color:#2d5f2d;"></span>
+                                <span class="legend-color" style="background:#78c679; border-color:#555;"></span>
                                 Land plots
                             </div>
                         `;
@@ -2809,11 +2809,11 @@
                     // Always show plot subdivisions and buildings
                     legendHTML += `
                         <div class="legend-item">
-                            <span class="legend-color" style="background:#FFB6C1; border-color:#C71585;"></span>
+                            <span class="legend-color" style="background:#c2e699; border-color:#78c679;"></span>
                             Plot subdivisions
                         </div>
                         <div class="legend-item">
-                            <span class="legend-color" style="background:#FFD700; border-color:#DAA520;"></span>
+                            <span class="legend-color" style="background:#ffffcc; border-color:#e6e6b3;"></span>
                             Buildings
                         </div>
                     `;
