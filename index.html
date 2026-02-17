@@ -978,6 +978,7 @@
             text-align: center;
             transition: all 0.2s;
             color: #333;
+            white-space: nowrap;
         }
 
         .map-nav-btn:hover {
@@ -3165,6 +3166,7 @@
                         buttonsDiv.innerHTML = `
                             <button class="map-nav-btn" data-view="map1">Plan 1888</button>
                             <button class="map-nav-btn" data-view="map2">Plan 1891</button>
+                            <button class="map-nav-btn" data-view="initial">Initial view</button>
                         `;
 
                         return section;
@@ -3362,6 +3364,11 @@
                             }
                             // Fly to Map 2 center
                             map.flyTo(map2Center, navigationZoom, {
+                                duration: 1.5,
+                                easeLinearity: 0.5
+                            });
+                        } else if (view === 'initial') {
+                            map.flyTo(mapCenter, initialZoom, {
                                 duration: 1.5,
                                 easeLinearity: 0.5
                             });
