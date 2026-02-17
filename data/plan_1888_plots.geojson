@@ -1779,8 +1779,8 @@
         "Patronymic native": null,
         "Note native": null,
         "Note": null,
-        "Religion native": "Христиане",
-        "Religion": "Christians",
+        "Religion native": "Евреи",
+        "Religion": "Jews",
         "Sex native": "Женский",
         "Sex": "Female",
         "Plot significance": null
@@ -1842,8 +1842,8 @@
         "Patronymic native": "Иванов",
         "Note native": null,
         "Note": null,
-        "Religion native": "Евреи",
-        "Religion": "Jews",
+        "Religion native": "Христиане",
+        "Religion": "Christians",
         "Sex native": "Мужской",
         "Sex": "Male",
         "Plot significance": null
