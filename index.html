@@ -14,6 +14,10 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-gesture-handling@1.2.2/dist/leaflet-gesture-handling.min.css"
           crossorigin=""/>
 
+    <!-- Leaflet Fullscreen Plugin CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.fullscreen@3.0.2/Control.FullScreen.css"
+          crossorigin=""/>
+
     <style>
         /* ========================================
            RESET & BASE STYLES
@@ -1742,6 +1746,10 @@
     <!-- Leaflet TextPath Plugin -->
     <script src="https://cdn.jsdelivr.net/npm/leaflet-textpath@1.2.3/leaflet.textpath.min.js"></script>
 
+    <!-- Leaflet Fullscreen Plugin -->
+    <script src="https://cdn.jsdelivr.net/npm/leaflet.fullscreen@3.0.2/Control.FullScreen.js"
+            crossorigin=""></script>
+
     <!-- JSZip for creating ZIP archives -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"
             integrity="sha512-XMVd28F1oH/O71fzwBnV7HucLxVwtxf26XV8P4wPk26EDxuGZ91N8bsOttmnomcCD3CS5ZMRL50H0GgOHvegtg=="
@@ -1784,6 +1792,9 @@
                     }
                 }
             }).setView(mapCenter, initialZoom);
+
+            // Fullscreen control
+            L.control.fullscreen({ position: 'topleft' }).addTo(map);
 
             // OpenStreetMap base layer
             const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
